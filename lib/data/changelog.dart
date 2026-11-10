@@ -22,9 +22,37 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.10.1';
+const String kCurrentVersion = '0.11.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.11.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '首页显示真实的第几周、星期几与当前时刻，不再写死',
+          '今天的课程按已过、正在上、待上三态显示，点一条看课程详情',
+          '今天没课时在首页直接给出下一节课的时间与教室',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '本周概况改为从课表算出的门数、节数与撞课位置',
+          '首页快捷入口的课表与学分能直接打开对应页面',
+        ],
+      ),
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '首页眉标写死「周一 · 第 11 周」，过了这一周就显示错误的问题',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.10.1',
     date: '2026-11-10',

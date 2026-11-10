@@ -171,7 +171,7 @@ class _DgutShellState extends State<DgutShell> {
     final double bottomSafe = DgutWindow.bottomSafe(context);
 
     final List<Widget> pages = [
-      HomePage(offset: _scroll[0]),
+      HomePage(offset: _scroll[0], onOpenTab: _goTo),
       TimetablePage(offset: _scroll[1]),
       ServicesPage(offset: _scroll[2]),
       MessagesPage(offset: _scroll[3]),
