@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
 
         return DgutPageScaffold(
           eyebrow: snap.eyebrow(now),
-          title: '今天',
+          title: snap.title,
           offset: widget.offset,
           footerHeight: 520,
           children: [
@@ -78,12 +78,8 @@ class _HomePageState extends State<HomePage> {
               spans: _statSpans(context, snap),
             ),
             const SizedBox(height: DgutSpace.s1),
-            if (snap.isEmptyToday)
-              _EmptyToday(
-                hasCourses: snap.hasCourses,
-                nextSummary: snap.nextSummary,
-                onTap: () => widget.onOpenTab(1),
-              )
+            if (snap.isEmptyDay)
+              _EmptyDay(snap: snap, onTap: () => widget.onOpenTab(1))
             else
               DgutTimeline(
                 items: <DgutTimelineItemData>[
@@ -189,19 +185,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// 统计行：今天几节 · 已过几节 · 还有几节
+  /// 统计行
   ///
-  /// 「还有」= 总数 − 已过，把正在上的那节也算进去，
-  /// 否则三个数加起来对不上当天节数。
+  /// 今天：`今天 4 节课 · 已过 2 · 还有 2`（「还有」含正在上的那节，
+  /// 否则三个数加起来对不上当天节数）。
+  /// 明天：`明天 3 节课 · 08:30–12:00` —— 明天的课还没上，
+  /// 「已过 / 还有」没有意义，改成给起止时间。
   ///
-  /// 今天没课时这里只说「今天没有课」，**下一节交给下面那一行**：
-  /// 两处都写一遍，同一句话在同一屏出现两次。
+  /// 这天没课时这里只说「今天 / 明天没有课」，**下一节交给下面那一行**：
+  /// 两处都写一遍，同一句话会在同一屏出现两次。
   List<InlineSpan> _statSpans(BuildContext context, TodaySnapshot snap) {
     if (!snap.hasCourses) {
       return <InlineSpan>[dgutPlain('课表还没建')];
     }
-    if (snap.isEmptyToday) {
-      return <InlineSpan>[dgutPlain('今天没有课')];
+    if (snap.isEmptyDay) {
+      return <InlineSpan>[dgutPlain('${snap.title}没有课')];
+    }
+    if (snap.showingTomorrow) {
+      return <InlineSpan>[
+        dgutPlain('明天 '),
+        dgutStrong(context, '${snap.items.length}'),
+        dgutPlain(' 节课 · ${snap.daySpan}'),
+      ];
     }
     return <InlineSpan>[
       dgutPlain('今天 '),
@@ -214,28 +219,24 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-/// 今天没课时的占位行。分两种：课表还没建、以及建了但今天恰好没课 ——
-/// 两种的出路不一样，不能共用一句"暂无数据"。
-class _EmptyToday extends StatelessWidget {
-  const _EmptyToday({
-    required this.hasCourses,
-    required this.nextSummary,
-    required this.onTap,
-  });
+/// 视图日没课时的占位行。三种情况、三种出路，不能共用一句"暂无数据"：
+/// 课表还没建 → 去建；今天没有课 → 等明天；明天也没有课 → 看下一节是哪天。
+class _EmptyDay extends StatelessWidget {
+  const _EmptyDay({required this.snap, required this.onTap});
 
-  final bool hasCourses;
-  final String? nextSummary;
+  final TodaySnapshot snap;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final String? next = snap.nextSummary;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DgutSpace.pad),
       child: DgutRow(
-        title: hasCourses ? '今天没有课' : '课表还没建',
-        subtitle: hasCourses
-            ? (nextSummary == null ? '这个学期都没有排课' : '下一节 $nextSummary')
-            : '导入教务课表，或手动添加一门',
+        title: snap.hasCourses ? '${snap.title}没有课' : '课表还没建',
+        subtitle: !snap.hasCourses
+            ? '导入教务课表，或手动添加一门'
+            : (next == null ? '这个学期都没有排课' : '下一节 $next'),
         showDivider: false,
         onTap: onTap,
       ),

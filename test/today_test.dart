@@ -36,16 +36,111 @@ Course course({
 );
 
 void main() {
-  group('首页今天 · 眉标', () {
-    test('第 11 周周二 09:00', () {
+  group('视图日 · 什么时候切到明天', () {
+    test('今天还有待上的课 → 留在今天', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[course(startSlot: 5)], // 14:30 那节，09:00 时还没到
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 9, 0),
+      );
+      expect(s.showingTomorrow, isFalse);
+      expect(s.title, '今天');
+      expect(s.items.length, 1);
+      expect(s.items.first.state, TodayState.todo);
+    });
+
+    test('今天的课全上完了 → 切明天，内容是明天的课', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[
+          course(id: 'a', name: '机器学习', weekday: 2, startSlot: 1),
+          course(id: 'b', name: '大数据技术', weekday: 3, startSlot: 3, room: '7B-408'),
+        ],
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 23, 0),
+      );
+      expect(s.showingTomorrow, isTrue);
+      expect(s.title, '明天');
+      expect(s.items.length, 1);
+      expect(s.items.first.course.name, '大数据技术');
+      // 明天的课一律是「待上」
+      expect(s.items.first.state, TodayState.todo);
+      expect(s.daySpan, '10:25–12:00');
+    });
+
+    test('今天本来就没课 → 也切明天（不是留着空白）', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[course(weekday: 3, name: '大数据技术')],
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 9, 0), // 周二
+      );
+      expect(s.showingTomorrow, isTrue);
+      expect(s.items.length, 1);
+      expect(s.items.first.course.name, '大数据技术');
+    });
+
+    test('正在上的那节算「还没上完」，不切', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[course()],
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 9, 0), // 第 1-2 节 08:30–10:10 之内
+      );
+      expect(s.showingTomorrow, isFalse);
+      expect(s.items.first.state, TodayState.now);
+    });
+
+    test('午休时上午的课已过、下午还有 → 不切', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[
+          course(id: 'a', startSlot: 1),
+          course(id: 'b', name: '自然语言处理', startSlot: 5),
+        ],
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 13, 0),
+      );
+      expect(s.showingTomorrow, isFalse);
+      expect(s.pastCount, 1);
+      expect(s.todoCount, 1);
+    });
+  });
+
+  group('视图日 · 眉标与标题', () {
+    test('今天视图给时刻', () {
       final TodaySnapshot s = buildToday(
         courses: <Course>[course()],
         calendar: term(),
         now: DateTime(2026, 11, 10, 9, 0),
       );
-      expect(s.week, 11);
-      expect(s.weekday, 2);
+      expect(s.title, '今天');
       expect(s.eyebrow(DateTime(2026, 11, 10, 9, 0)), '周二 · 第 11 周 · 09:00');
+    });
+
+    test('明天视图给日期，不给时刻', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[
+          course(id: 'a', weekday: 2, startSlot: 1),
+          course(id: 'b', name: '大数据技术', weekday: 3, startSlot: 3),
+        ],
+        calendar: term(),
+        now: DateTime(2026, 11, 10, 23, 0),
+      );
+      expect(s.title, '明天');
+      expect(s.viewWeekday, DateTime.wednesday);
+      expect(s.eyebrow(DateTime(2026, 11, 10, 23, 0)), '周三 · 11 月 11 日 · 第 11 周');
+    });
+
+    test('跨周那天：周日晚上看周一，周次与日期都跟着视图日走', () {
+      final TodaySnapshot s = buildToday(
+        courses: <Course>[
+          course(id: 'a', weekday: 7, startSlot: 1), // 周日有课
+          course(id: 'b', name: '大数据技术', weekday: 1, startSlot: 3),
+        ],
+        calendar: term(),
+        now: DateTime(2026, 11, 15, 23, 0), // 第 11 周周日
+      );
+      expect(s.showingTomorrow, isTrue);
+      expect(s.week, 12);
+      expect(s.weekLabel, '第 12 周');
+      expect(s.viewWeekday, DateTime.monday);
     });
 
     test('开学前是「未开学」，学期后是「假期」', () {
@@ -67,14 +162,12 @@ void main() {
     });
   });
 
-  group('首页今天 · 三态', () {
-    // 第 1-2 节 08:30–10:10；第 3-4 节 10:25–12:00；第 5-6 节 14:30–16:10
-    final List<Course> two = <Course>[
-      course(id: 'a', name: '机器学习', startSlot: 1),
-      course(id: 'b', name: '大数据技术', startSlot: 3),
-    ];
-
+  group('三态', () {
     test('09:00 时第一节正在上、第二节待上', () {
+      final List<Course> two = <Course>[
+        course(id: 'a', name: '机器学习', startSlot: 1),
+        course(id: 'b', name: '大数据技术', startSlot: 3),
+      ];
       final TodaySnapshot s = buildToday(
         courses: two,
         calendar: term(),
@@ -88,26 +181,17 @@ void main() {
       expect(s.pastCount, 0);
     });
 
-    test('13:00 午休时两节都算已过，且没有"正在上"', () {
-      final TodaySnapshot s = buildToday(
-        courses: two,
-        calendar: term(),
-        now: DateTime(2026, 11, 10, 13, 0),
-      );
-      expect(s.items[0].state, TodayState.past);
-      expect(s.items[1].state, TodayState.past);
-      expect(s.pastCount, 2);
-      expect(s.todoCount, 0);
-    });
-
     test('12:10（课间）上一节已过、下一节待上', () {
       final TodaySnapshot s = buildToday(
-        courses: two,
+        courses: <Course>[
+          course(id: 'a', startSlot: 1),
+          course(id: 'b', name: '自然语言处理', startSlot: 5),
+        ],
         calendar: term(),
         now: DateTime(2026, 11, 10, 12, 10),
       );
       expect(s.items[0].state, TodayState.past);
-      expect(s.items[1].state, TodayState.past);
+      expect(s.items[1].state, TodayState.todo);
     });
 
     test('同一天同一门课两段会各算一节，并按开始时间排序', () {
@@ -143,7 +227,7 @@ void main() {
     });
   });
 
-  group('首页今天 · 周次与调休', () {
+  group('周次与调休', () {
     test('只上单周的课在第 2 周不出现', () {
       final Course odd = course(weeks: <int>[1, 3, 5, 7, 9, 11]);
       final TodaySnapshot w2 = buildToday(
@@ -166,10 +250,7 @@ void main() {
         week1Monday: DateTime(2026, 8, 31),
         weekCount: 20,
         exceptions: <DayException>[
-          DayException(
-            date: DateTime(2026, 9, 26), // 周六
-            followsWeekday: 1,
-          ),
+          DayException(date: DateTime(2026, 9, 26), followsWeekday: 1), // 周六
         ],
       );
       final TodaySnapshot s = buildToday(
@@ -178,7 +259,7 @@ void main() {
         now: DateTime(2026, 9, 26, 9, 0),
       );
       expect(s.items.length, 1);
-      expect(s.weekday, DateTime.saturday);
+      expect(s.viewWeekday, DateTime.saturday);
     });
 
     test('停课日今天没课', () {
@@ -198,38 +279,44 @@ void main() {
     });
   });
 
-  group('首页今天 · 下一节', () {
-    test('今天还有课 → 今天', () {
+  group('下一节：只在视图日没课时才给', () {
+    test('视图日有课 → 不给下一节（已经在看那天的课了）', () {
       final TodaySnapshot s = buildToday(
         courses: <Course>[course(startSlot: 5)],
         calendar: term(),
         now: DateTime(2026, 11, 10, 9, 0),
       );
-      expect(s.nextDayLabel, '今天');
-      expect(s.nextSummary, startsWith('今天 14:30 机器学习'));
+      expect(s.next, isNull);
+      expect(s.nextSummary, isNull);
     });
 
-    test('今天上完了 → 明天', () {
+    test('今天上完了、明天也有课 → 不给（明天就在眼前）', () {
       final TodaySnapshot s = buildToday(
         courses: <Course>[
-          course(id: 'a'),
-          course(id: 'b', name: '大数据技术', weekday: 3, room: '7B-412'),
+          course(id: 'a', weekday: 2),
+          course(id: 'b', name: '大数据技术', weekday: 3, startSlot: 3),
         ],
         calendar: term(),
         now: DateTime(2026, 11, 10, 23, 0),
       );
-      expect(s.nextDayLabel, '明天');
-      expect(s.nextSummary, startsWith('明天 08:30 大数据技术'));
+      expect(s.showingTomorrow, isTrue);
+      expect(s.next, isNull);
     });
 
-    test('一周只有周二有课，周二晚上看到的下一节是下周二', () {
+    test('明天也没课 → 给出再往后那天', () {
       final TodaySnapshot s = buildToday(
-        courses: <Course>[course()],
+        courses: <Course>[
+          course(id: 'a', weekday: 2, startSlot: 1),
+          course(id: 'c', name: 'Python数据分析与应用', weekday: 5, startSlot: 5, room: '6F-202'),
+        ],
         calendar: term(),
-        now: DateTime(2026, 11, 10, 23, 0),
+        now: DateTime(2026, 11, 10, 23, 0), // 周二晚；周三无课，周四无课，周五有
       );
-      expect(s.nextDayLabel, '周二');
-      expect(s.nextSummary, startsWith('周二 08:30 机器学习'));
+      expect(s.showingTomorrow, isTrue);
+      expect(s.items, isEmpty);
+      expect(s.nextDayLabel, '周五');
+      expect(s.nextSummary, startsWith('周五 14:30 Python数据分析与应用'));
+      expect(s.nextSummary, contains('6F-202'));
     });
 
     test('整学期没课 → 保持 null', () {
@@ -243,7 +330,7 @@ void main() {
     });
   });
 
-  group('首页今天 · 本周概况', () {
+  group('本周概况', () {
     test('门数 / 节数 / 撞课位置', () {
       final List<Course> clash = <Course>[
         course(id: 'a', name: '机器学习', startSlot: 1),
@@ -293,14 +380,17 @@ void main() {
     });
   });
 
-  group('首页今天 · 副标题', () {
+  group('副标题', () {
     test('地点 · 状态 · 教师，教师名在后（会被截断的是它）', () {
       final TodaySnapshot s = buildToday(
-        courses: <Course>[course(teacher: '张剑副研究员')],
+        courses: <Course>[
+          course(id: 'a', startSlot: 1),
+          course(id: 'b', name: '自然语言处理', startSlot: 5),
+        ],
         calendar: term(),
-        now: DateTime(2026, 11, 10, 23, 0),
+        now: DateTime(2026, 11, 10, 11, 0), // 第 1-2 节已过，下午还有课 → 留在今天
       );
-      expect(s.items.first.subtitle, '7B-311 · 已结束 · 张剑副研究员');
+      expect(s.items.first.subtitle, '7B-311 · 已结束 · 阮奕邦');
     });
 
     test('空地点与空教师都不留下多余的分隔点', () {

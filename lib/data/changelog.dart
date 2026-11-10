@@ -22,9 +22,23 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.11.0';
+const String kCurrentVersion = '0.12.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.12.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '今天课上完后首页自动切到「明天」，预告明天的课与起止时间',
+          '明天也没课时写明「明天没有课」，并给出下一节是哪天几点',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.11.0',
     date: '2026-11-10',
