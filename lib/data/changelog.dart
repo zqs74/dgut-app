@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.8.1';
+const String kCurrentVersion = '0.8.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.8.2',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '浮层底板统一：顶部圆角、四周留白、顶部抓手，不再贴底贴边',
+          '每节课时长改成直接填数字',
+          '每节的开始与结束改成两个时间小按钮；固定时长时结束按钮置灰',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.8.1',
     date: '2026-11-10',

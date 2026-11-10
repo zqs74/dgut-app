@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../components/dgut_basics.dart';
 import '../components/dgut_page_scaffold.dart';
+import '../components/dgut_sheet.dart';
 import '../model/timetable_data.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
@@ -57,23 +58,23 @@ class _TableListPageState extends State<TableListPage> {
   }
 
   Future<void> _menu(TimetableData table) async {
-    final String? action = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: context.dg.bg,
-      builder: (BuildContext ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DgutRow(title: '重命名', onTap: () => Navigator.of(ctx).pop('rename')),
-            if (_repo.tables.length > 1)
-              DgutRow(
-                title: '删除',
-                tone: DgutRowTone.urgent,
-                showDivider: false,
-                onTap: () => Navigator.of(ctx).pop('delete'),
-              ),
-          ],
-        ),
+    final String? action = await showDgutSheet<String>(
+      context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DgutRow(
+            title: '重命名',
+            onTap: () => Navigator.of(context).pop('rename'),
+          ),
+          if (_repo.tables.length > 1)
+            DgutRow(
+              title: '删除',
+              tone: DgutRowTone.urgent,
+              showDivider: false,
+              onTap: () => Navigator.of(context).pop('delete'),
+            ),
+        ],
       ),
     );
 

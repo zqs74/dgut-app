@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../components/dgut_basics.dart';
 import '../components/dgut_page_scaffold.dart';
@@ -6,7 +7,10 @@ import '../data/default_periods.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
 
-/// 上课时间（L3）：固定时长、每节时长、节数、每节开始时间。
+/// 上课时间（L3）：固定时长、每节时长、节数、每节开始与结束时间。
+///
+/// 时间的改法照 WakeUp：每节两个时间小按钮，点哪个改哪个；
+/// 开了「固定上课时长」就只有开始时间能改，结束时间由开始 + 时长推出来。
 class TimeTablePage extends StatefulWidget {
   const TimeTablePage({super.key});
 
@@ -18,13 +22,34 @@ class _TimeTablePageState extends State<TimeTablePage> {
   final ValueNotifier<DgutScrollInfo> _offset = ValueNotifier<DgutScrollInfo>(
     DgutScrollInfo.zero,
   );
+  final FocusNode _durationFocus = FocusNode();
+
+  late final TextEditingController _durationCtrl;
 
   TimetableRepository get _repo => TimetableRepository.instance;
 
   @override
+  void initState() {
+    super.initState();
+    _durationCtrl = TextEditingController(text: '${_repo.durationMinutes}');
+    _repo.addListener(_syncDuration);
+  }
+
+  @override
   void dispose() {
+    _repo.removeListener(_syncDuration);
+    _durationCtrl.dispose();
+    _durationFocus.dispose();
     _offset.dispose();
     super.dispose();
+  }
+
+  /// 时长被外部改动（恢复默认）时把输入框拉回一致，打字过程中不打断
+  void _syncDuration() {
+    final String want = '${_repo.durationMinutes}';
+    if (!_durationFocus.hasFocus && _durationCtrl.text != want) {
+      _durationCtrl.text = want;
+    }
   }
 
   static TimeOfDay _parse(String hhmm) {
@@ -38,7 +63,9 @@ class _TimeTablePageState extends State<TimeTablePage> {
   static String _format(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-  Future<void> _editPeriod(int index) async {
+  static int _minutesOf(TimeOfDay t) => t.hour * 60 + t.minute;
+
+  Future<void> _editStart(int index) async {
     final List<DgutPeriod> list = <DgutPeriod>[..._repo.periods];
     final DgutPeriod current = list[index];
 
@@ -49,50 +76,38 @@ class _TimeTablePageState extends State<TimeTablePage> {
     );
     if (start == null || !mounted) return;
 
-    TimeOfDay end;
+    int endMinutes = dgutMinutesOf(current.end);
     if (_repo.fixedDuration) {
-      final int minutes =
-          start.hour * 60 + start.minute + _repo.durationMinutes;
-      end = TimeOfDay(hour: (minutes ~/ 60) % 24, minute: minutes % 60);
-    } else {
-      final TimeOfDay? picked = await showTimePicker(
-        context: context,
-        initialTime: _parse(current.end),
-        helpText: '第 ${index + 1} 节 结束',
-      );
-      if (picked == null) return;
-      end = picked;
+      endMinutes = _minutesOf(start) + _repo.durationMinutes;
+    } else if (endMinutes <= _minutesOf(start)) {
+      endMinutes = _minutesOf(start) + _repo.durationMinutes;
     }
 
-    final int startMinutes = start.hour * 60 + start.minute;
-    final int endMinutes = end.hour * 60 + end.minute;
-    if (endMinutes <= startMinutes) return;
-
-    list[index] = DgutPeriod(_format(start), _format(end));
+    list[index] = DgutPeriod(_format(start), dgutFormatMinutes(endMinutes));
     await _repo.setPeriods(list);
   }
 
-  Future<void> _pickDuration() async {
-    final int? picked = await showModalBottomSheet<int>(
+  Future<void> _editEnd(int index) async {
+    if (_repo.fixedDuration) return;
+    final List<DgutPeriod> list = <DgutPeriod>[..._repo.periods];
+    final DgutPeriod current = list[index];
+
+    final TimeOfDay? end = await showTimePicker(
       context: context,
-      backgroundColor: context.dg.bg,
-      builder: (BuildContext ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final int m in <int>[35, 40, 45, 50, 55, 60])
-              DgutRow(
-                title: '$m 分钟',
-                value: m == _repo.durationMinutes ? '当前' : null,
-                showChevron: false,
-                showDivider: m != 60,
-                onTap: () => Navigator.of(ctx).pop(m),
-              ),
-          ],
-        ),
-      ),
+      initialTime: _parse(current.end),
+      helpText: '第 ${index + 1} 节 结束',
     );
-    if (picked != null) await _repo.setDuration(picked);
+    if (end == null) return;
+    if (_minutesOf(end) <= dgutMinutesOf(current.start)) return;
+
+    list[index] = DgutPeriod(current.start, _format(end));
+    await _repo.setPeriods(list);
+  }
+
+  void _onDurationChanged(String raw) {
+    final int? n = int.tryParse(raw);
+    if (n == null || n < 20 || n > 180) return;
+    _repo.setDuration(n);
   }
 
   @override
@@ -134,8 +149,57 @@ class _TimeTablePageState extends State<TimeTablePage> {
                     ),
                     DgutRow(
                       title: '每节课时长',
-                      value: '${_repo.durationMinutes} 分钟',
-                      onTap: _pickDuration,
+                      showChevron: false,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 64,
+                            height: 34,
+                            child: TextField(
+                              controller: _durationCtrl,
+                              focusNode: _durationFocus,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              inputFormatters: <TextInputFormatter>[
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(3),
+                              ],
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.2,
+                                fontWeight: FontWeight.w600,
+                                color: c.ink,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                              cursorColor: c.blue,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                filled: true,
+                                fillColor: c.fill,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    DgutRadius.r1,
+                                  ),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              onChanged: _onDurationChanged,
+                              onSubmitted: _onDurationChanged,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '分钟',
+                            style: DgutType.caption1.copyWith(color: c.ink3),
+                          ),
+                        ],
+                      ),
                     ),
                     DgutRow(
                       title: '节数',
@@ -165,9 +229,31 @@ class _TimeTablePageState extends State<TimeTablePage> {
                     for (var i = 0; i < periods.length; i++)
                       DgutRow(
                         title: '第 ${i + 1} 节',
-                        value: '${periods[i].start}–${periods[i].end}',
+                        showChevron: false,
                         showDivider: i < periods.length - 1,
-                        onTap: () => _editPeriod(i),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _TimeChip(
+                              text: periods[i].start,
+                              onTap: () => _editStart(i),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                              ),
+                              child: Text(
+                                '–',
+                                style: TextStyle(fontSize: 14, color: c.ink3),
+                              ),
+                            ),
+                            _TimeChip(
+                              text: periods[i].end,
+                              enabled: !_repo.fixedDuration,
+                              onTap: () => _editEnd(i),
+                            ),
+                          ],
+                        ),
                       ),
                     const SizedBox(height: DgutSpace.s3),
                     Align(
@@ -186,6 +272,48 @@ class _TimeTablePageState extends State<TimeTablePage> {
           ),
         );
       },
+    );
+  }
+}
+
+/// 一个时间小按钮。固定时长时结束时间不可点，压暗。
+class _TimeChip extends StatelessWidget {
+  const _TimeChip({
+    required this.text,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final String text;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    return DgutPressable(
+      onTap: enabled ? onTap : null,
+      pressedOpacity: 0.7,
+      child: Container(
+        height: 34,
+        constraints: const BoxConstraints(minWidth: 66),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: enabled ? c.fill : c.fill.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(DgutRadius.r1),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.2,
+            fontWeight: FontWeight.w600,
+            color: enabled ? c.ink : c.ink4,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
     );
   }
 }
