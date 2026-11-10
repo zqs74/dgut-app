@@ -17,6 +17,8 @@ class CourseEditPage extends StatefulWidget {
     this.course,
     this.slotIndex,
     this.initialWeek = 1,
+    this.initialWeekday,
+    this.initialSlot,
   });
 
   /// 为 null 表示新建课程
@@ -26,6 +28,10 @@ class CourseEditPage extends StatefulWidget {
   final int? slotIndex;
 
   final int initialWeek;
+
+  /// 长按空白格进来时预填的星期与节次
+  final int? initialWeekday;
+  final int? initialSlot;
 
   @override
   State<CourseEditPage> createState() => _CourseEditPageState();
@@ -38,6 +44,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
   late final TextEditingController _name;
   late final TextEditingController _teacher;
   late final TextEditingController _room;
+  late final TextEditingController _note;
 
   late int _weekday;
   late int _startSlot;
@@ -64,8 +71,9 @@ class _CourseEditPageState extends State<CourseEditPage> {
     _name = TextEditingController(text: c?.name ?? '');
     _teacher = TextEditingController(text: c?.teacher ?? '');
     _room = TextEditingController(text: slot?.room ?? '');
-    _weekday = slot?.weekday ?? 1;
-    _startSlot = slot?.startSlot ?? 1;
+    _note = TextEditingController(text: c?.note ?? '');
+    _weekday = slot?.weekday ?? widget.initialWeekday ?? 1;
+    _startSlot = slot?.startSlot ?? widget.initialSlot ?? 1;
     _slotCount = slot?.slotCount ?? 2;
     _weeks = <int>{...(slot?.weeks ?? List<int>.generate(16, (i) => i + 1))};
     _tone = c?.tone ?? 0;
@@ -76,6 +84,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
     _name.dispose();
     _teacher.dispose();
     _room.dispose();
+    _note.dispose();
     _offset.dispose();
     super.dispose();
   }
@@ -109,6 +118,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
           teacher: _teacher.text.trim(),
           tone: _tone,
           source: CourseSource.manual,
+          note: _note.text.trim(),
           slots: [slot],
         ),
       );
@@ -125,6 +135,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
           name: name,
           teacher: _teacher.text.trim(),
           tone: _tone,
+          note: _note.text.trim(),
           slots: slots,
           // 手动改过就转成 manual，下一次抓教务不再覆盖这门课（仓储的合并规则靠这个）
           source: CourseSource.manual,
@@ -158,6 +169,11 @@ class _CourseEditPageState extends State<CourseEditPage> {
               _Field(label: '课程名', controller: _name, hint: '如 机器学习'),
               _Field(label: '教师', controller: _teacher, hint: '可不填'),
               _Field(label: '地点', controller: _room, hint: '如 7B-311，可不填'),
+              _Field(
+                label: '备注',
+                controller: _note,
+                hint: '点名、水课、考试…会显示在课块第三行',
+              ),
 
               const DgutGroupHead(title: '星期'),
               Wrap(

@@ -22,10 +22,33 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.6.3';
+const String kCurrentVersion = '0.7.0';
 
 const List<ChangelogEntry> kChangelog = [
   ChangelogEntry(
+    version: 'v0.7.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '课表页按新设计重写：每节 48px，课名、备注与教室都读得清',
+          '周末没课时自动收起，周一至周五各列更宽',
+          '周条可直接跳周，翻到别的周时右下角出现「回到本周」',
+          '课块第三行显示备注（点名、水课），详情页可看周次分布',
+          '课表设置页：当前第几周、已添课程、添加课程三个入口',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '点课块先进详情、再进编辑，返回逐层退，不再一步跳回课表',
+          '长按空白格直接新建，星期与节次已经填好',
+          '今天这一列有底色，一条红线标出现在上到哪一节',
+        ],
+      ),
+    ],
+  ),  ChangelogEntry(
     version: 'v0.6.3',
     date: '2026-11-10',
     sections: [

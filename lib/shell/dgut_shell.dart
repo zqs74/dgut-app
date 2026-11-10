@@ -8,13 +8,17 @@ import '../components/dgut_rail.dart';
 import '../components/dgut_reselect.dart';
 import '../components/dgut_theme_sheet.dart';
 import '../components/dgut_topbar.dart';
+import '../model/course.dart';
 import '../pages/changelog_page.dart';
+import '../pages/course_detail_page.dart';
 import '../pages/course_edit_page.dart';
 import '../pages/home_page.dart';
 import '../pages/me_page.dart';
 import '../pages/messages_page.dart';
 import '../pages/services_page.dart';
 import '../pages/timetable_page.dart';
+import '../pages/timetable_settings_page.dart';
+import '../store/timetable_repository.dart';
 import '../theme/dgut_motion.dart';
 import '../theme/dgut_tokens.dart';
 import '../theme/dgut_window.dart';
@@ -104,6 +108,19 @@ class _DgutShellState extends State<DgutShell> {
       Navigator.of(context).push(
         MaterialPageRoute<bool>(builder: (_) => const CourseEditPage()),
       );
+    } else if (boot == 'settings') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const TimetableSettingsPage()),
+      );
+    } else if (boot == 'detail') {
+      final List<Course> list = TimetableRepository.instance.courses;
+      if (list.isNotEmpty) {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CourseDetailPage(courseId: list.first.id),
+          ),
+        );
+      }
     }
   }
 
