@@ -7,9 +7,9 @@ import '../theme/dgut_tokens.dart';
 import 'dgut_basics.dart';
 import 'dgut_theme_sheet.dart' show DgutSheetClose;
 
-enum _Phase { checking, latest, available, downloading, done, error }
+enum _Phase { checking, latest, available, downloading, needPermission, done, error }
 
-/// 检查更新浮层：检查 → 有新版/已最新 → 下载进度 → 唤起系统安装器
+/// 检查更新浮层：检查 → 有新版/已最新 → 授权 → 下载进度 → 唤起系统安装器
 Future<void> showDgutUpdateSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -27,22 +27,49 @@ class _UpdateSheet extends StatefulWidget {
   State<_UpdateSheet> createState() => _UpdateSheetState();
 }
 
-class _UpdateSheetState extends State<_UpdateSheet> {
+class _UpdateSheetState extends State<_UpdateSheet>
+    with WidgetsBindingObserver {
   _Phase _phase = _Phase.checking;
   UpdateInfo? _info;
   double _progress = 0;
   String? _error;
+  String _permissionHint = '系统还没允许这个 App 安装 APK。';
+
+  /// 失败发生在下载阶段时，「重试」应该重下而不是重新检查
+  bool _failedOnDownload = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// 从「安装未知应用」设置页回来：已授权就直接接着下载
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (_phase != _Phase.needPermission) return;
+    _resumeAfterPermission();
+  }
+
+  Future<void> _resumeAfterPermission() async {
+    final bool ok = await UpdateService.canInstall();
+    if (!mounted || !ok) return;
+    _download();
   }
 
   Future<void> _check() async {
     setState(() {
       _phase = _Phase.checking;
       _error = null;
+      _failedOnDownload = false;
     });
     try {
       final UpdateInfo? info = await UpdateService.check(kCurrentVersion);
@@ -51,11 +78,17 @@ class _UpdateSheetState extends State<_UpdateSheet> {
         _info = info;
         _phase = info == null ? _Phase.latest : _Phase.available;
       });
+    } on UpdateException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _phase = _Phase.error;
+        _error = e.message;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _phase = _Phase.error;
-        _error = _friendly(e);
+        _error = '检查失败：$e';
       });
     }
   }
@@ -66,6 +99,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
     setState(() {
       _phase = _Phase.downloading;
       _progress = 0;
+      _failedOnDownload = false;
     });
     try {
       await UpdateService.downloadAndInstall(info, (double p) {
@@ -74,25 +108,43 @@ class _UpdateSheetState extends State<_UpdateSheet> {
       });
       if (!mounted) return;
       setState(() => _phase = _Phase.done);
+    } on UpdateException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        if (e.needsInstallPermission) {
+          _phase = _Phase.needPermission;
+          _permissionHint = e.message;
+        } else {
+          _phase = _Phase.error;
+          _error = e.message;
+          _failedOnDownload = true;
+        }
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _phase = _Phase.error;
-        _error = _friendly(e);
+        _error = '下载中断：$e';
+        _failedOnDownload = true;
       });
     }
   }
 
-  String _friendly(Object e) {
-    final String s = e.toString();
-    if (s.contains('SocketException') || s.contains('timeout')) {
-      return '连不上更新服务器，检查网络后再试';
+  Future<void> _openPermission() async {
+    final bool ok = await UpdateService.openInstallPermission();
+    if (!mounted) return;
+    if (!ok) {
+      setState(() {
+        _phase = _Phase.error;
+        _error = '打不开系统设置页。请手动去：设置 → 应用 → 莞工 App → 安装未知应用 → 允许。';
+        _failedOnDownload = false;
+      });
+      return;
     }
-    if (s.contains('install_failed')) {
-      return '唤起安装失败：请在系统设置里允许本应用安装未知应用';
-    }
-    if (s.contains('HTTP')) return s;
-    return '出了点问题：$s';
+    // 有些系统不给生命周期回调，回来时也主动查一次
+    Future<void>.delayed(const Duration(milliseconds: 600), () {
+      if (mounted && _phase == _Phase.needPermission) _resumeAfterPermission();
+    });
   }
 
   @override
@@ -243,9 +295,32 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                 valueColor: AlwaysStoppedAnimation<Color>(c.blue),
               ),
             ),
-            const SizedBox(height: 12),
-            Text('下完会弹系统安装界面，点「安装」即可完成',
-                style: DgutType.caption1.copyWith(color: c.ink3)),
+          ],
+        );
+
+      case _Phase.needPermission:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('需要允许安装',
+                style: DgutType.body.copyWith(
+                    color: c.ink, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text(_permissionHint,
+                style: DgutType.footnote
+                    .copyWith(color: c.ink3, height: 1.6)),
+            const SizedBox(height: DgutSpace.s2),
+            Row(
+              children: [
+                const Spacer(),
+                DgutButton(
+                  label: '去开启',
+                  variant: DgutButtonVariant.filled,
+                  size: DgutButtonSize.sm,
+                  onTap: _openPermission,
+                ),
+              ],
+            ),
           ],
         );
 
@@ -257,7 +332,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                 style: DgutType.body.copyWith(
                     color: c.ink, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text('在系统弹窗里点「安装」完成更新；若没看到弹窗，请允许本应用安装未知应用后重试',
+            Text('在系统弹窗里点「安装」完成更新；没看到弹窗就再点一次下载。',
                 style: DgutType.footnote
                     .copyWith(color: c.ink3, height: 1.6)),
           ],
@@ -280,7 +355,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
               child: DgutButton(
                 label: '重试',
                 size: DgutButtonSize.sm,
-                onTap: _check,
+                onTap: _failedOnDownload ? _download : _check,
               ),
             ),
           ],

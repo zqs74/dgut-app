@@ -22,9 +22,28 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.4.0';
+const String kCurrentVersion = '0.4.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.4.1',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '缺「安装未知应用」权限时直接给「去开启」，跳到系统授权页，回来自动继续',
+          '检查更新的失败原因改成看得懂的说法，不再直接抛 HandshakeException',
+        ],
+      ),
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '下载进度里那行灰色提示去掉',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.4.0',
     date: '2026-11-10',

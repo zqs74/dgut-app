@@ -11,3 +11,7 @@ Future<void> downloadAndInstallImpl(
 ) async {
   throw UnsupportedError('当前平台不支持应用内更新');
 }
+
+Future<bool> canInstallImpl() async => true;
+
+Future<bool> openInstallPermissionImpl() async => false;

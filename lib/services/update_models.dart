@@ -19,3 +19,19 @@ class UpdateInfo {
     return '${mb.toStringAsFixed(1)} MB';
   }
 }
+
+/// 更新链路的可读错误。
+///
+/// 直接把 `HandshakeException: Connection terminated during handshake` 摆给用户
+/// 没有意义 —— 他要的是"哪里坏了、我现在能做什么"。所以所有失败都收敛成这个
+/// 类型：`message` 可以直接显示，`needsInstallPermission` 决定 UI 要不要给
+/// 一个「去开启」的按钮。
+class UpdateException implements Exception {
+  const UpdateException(this.message, {this.needsInstallPermission = false});
+
+  final String message;
+  final bool needsInstallPermission;
+
+  @override
+  String toString() => message;
+}

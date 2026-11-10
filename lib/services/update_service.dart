@@ -25,6 +25,13 @@ class UpdateService {
   ) =>
       impl.downloadAndInstallImpl(info, onProgress);
 
+  /// 系统是否已允许本应用「安装未知应用」
+  static Future<bool> canInstall() => impl.canInstallImpl();
+
+  /// 直接跳到本应用的「安装未知应用」授权页，返回是否成功打开
+  static Future<bool> openInstallPermission() =>
+      impl.openInstallPermissionImpl();
+
   /// 当前平台是否支持自动更新（只有 Android 做）
   static bool get isSupported => impl.isSupportedImpl;
 }
