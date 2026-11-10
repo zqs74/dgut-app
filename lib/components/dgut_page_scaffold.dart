@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -47,8 +48,12 @@ class DgutPageScaffold extends StatefulWidget {
   /// 收成小标题的滚动距离
   static const double _morphSpan = 70;
 
+  /// 交接窗口：大标题已经钉住之后再交叉，才不会看到位移
+  static const double _handoffStart = 62;
+  static const double _handoffSpan = 12;
+
   /// 返回按钮占的横向宽度（44 按钮 + 12 间距）
-  static const double _backLane = 56;
+  static const double _backLane = 52;
 
   @override
   State<DgutPageScaffold> createState() => _DgutPageScaffoldState();
@@ -121,6 +126,12 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
 
   double get _leading => _hasBack ? DgutPageScaffold._backLane : 0;
 
+  /// 大标题要上移的距离：二级页落到与返回按钮同轴(59)，一级页落到贴底(85)
+  double get _travel => _hasBack ? 69 : 43;
+
+  /// 每像素滚动的跟随比例：走满 _travel 正好用 _morphSpan
+  double get _track => 1 - _travel / DgutPageScaffold._morphSpan;
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // AutomaticKeepAliveClientMixin 要求
@@ -136,14 +147,20 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
               final double px = widget.offset.value.pixels;
               final double t =
                   (px / DgutPageScaffold._morphSpan).clamp(0.0, 1.0);
+              // 走满 _travel 就钉住，不再跟着滚 —— 落点必须和顶栏标题完全重合
+              final double dy = math.min(px * _track, _travel);
+              // 交接窗口很短，且发生在已经钉住之后，所以看不到"跳位置"
+              final double fade =
+                  1 - ((px - DgutPageScaffold._handoffStart) / DgutPageScaffold._handoffSpan)
+                      .clamp(0.0, 1.0);
               return Transform.translate(
-                // 净上移 0.614·px：滚 70px 时走完 43px，标题底部正好落到顶栏标题的基线
-                offset: Offset(0, px * 0.386),
+                offset: Offset(0, dy),
                 child: DgutLargeHeader(
                   eyebrow: widget.eyebrow,
                   title: widget.title,
                   morph: t,
                   leftInset: _leading,
+                  opacity: fade,
                 ),
               );
             },
@@ -193,6 +210,7 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
                       offset: px,
                       leftInset: _leading,
                       topInset: _topInset,
+                      verticalCenter: true,
                     ),
                   ],
                 );
@@ -202,7 +220,7 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
         ),
         Positioned(
           left: DgutSpace.pad,
-          top: _topInset + 8,
+          top: _topInset + 26,
           child: _GlassBackButton(onTap: widget.onBack!),
         ),
       ],

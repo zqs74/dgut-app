@@ -22,9 +22,23 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.5.2';
+const String kCurrentVersion = '0.5.3';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.5.3',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '二级页的小标题与返回按钮同一条中轴，横向只剩 8px',
+          '一级页的顶栏标题仍贴底，不跟着往上提',
+          '大标题收缩的落点钉死，交接时不再跳位置',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.5.2',
     date: '2026-11-10',

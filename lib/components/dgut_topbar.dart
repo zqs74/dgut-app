@@ -17,6 +17,7 @@ class DgutTopBar extends StatelessWidget {
     required this.offset,
     this.leftInset = 0,
     this.topInset = 0,
+    this.verticalCenter = false,
   });
 
   final String title;
@@ -28,9 +29,12 @@ class DgutTopBar extends StatelessWidget {
   /// 状态栏高度：顶栏整体下移，标题仍贴在顶栏底部
   final double topInset;
 
+  /// 有返回按钮时与按钮同一条中轴；没有按钮就照旧贴底
+  final bool verticalCenter;
+
   /// 与大标题收缩同步：40 开始淡入，66 完全到位
-  static const double _riseStart = 50;
-  static const double _riseSpan = 20;
+  static const double _riseStart = 62;
+  static const double _riseSpan = 28;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +57,14 @@ class DgutTopBar extends StatelessWidget {
           child: Transform.translate(
             offset: Offset(0, 4 * (1 - p)),
             child: Padding(
+              // 垂直居中于 96 的顶栏带，跟返回按钮同一条中轴
               padding: EdgeInsets.fromLTRB(
-                  DgutSpace.pad + leftInset, topInset, DgutSpace.pad, 11),
+                  DgutSpace.pad + leftInset,
+                  topInset + (verticalCenter ? 37 : 63),
+                  DgutSpace.pad,
+                  0),
               child: Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.topLeft,
                 child: Text(
                   title,
                   style: DgutType.headline.copyWith(color: c.ink),
