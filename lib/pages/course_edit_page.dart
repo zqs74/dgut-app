@@ -140,13 +140,15 @@ class _CourseEditPageState extends State<CourseEditPage> {
     final DgutColors c = context.dg;
     final int weekCount = TimetableRepository.instance.calendar.weekCount;
 
-    return DgutPageScaffold(
-      eyebrow: _isNewCourse ? '手动录入' : '课程',
-      title: _isNewCourse ? '添加课程' : '编辑课程',
-      offset: _offset,
-      footerHeight: 40,
-      onBack: () => Navigator.of(context).maybePop(),
-      children: [
+    return Scaffold(
+      backgroundColor: c.bg,
+      body: DgutPageScaffold(
+        eyebrow: _isNewCourse ? '手动录入' : '课程',
+        title: _isNewCourse ? '添加课程' : '编辑课程',
+        offset: _offset,
+        footerHeight: 40,
+        onBack: () => Navigator.of(context).maybePop(),
+        children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
               DgutSpace.pad, DgutSpace.s2, DgutSpace.pad, 0),
@@ -286,6 +288,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
           ),
         ),
       ],
+      ),
     );
   }
 }
@@ -351,24 +354,33 @@ class _Pill extends StatelessWidget {
       onTap: onTap,
       pressedOpacity: 1,
       pressedScale: 0.96,
-      child: Container(
-        height: 34,
-        constraints: const BoxConstraints(minWidth: 40),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? c.blue.withValues(alpha: 0.12) : c.fill,
-          borderRadius: BorderRadius.circular(DgutRadius.full),
-          border: Border.all(
-            color: selected ? c.blue.withValues(alpha: 0.55) : Colors.transparent,
-            width: 1,
+      // 注意：Container 一旦带 alignment，在 Wrap 里就会撑满整行 ——
+      // 这里用 Row(mainAxisSize.min) 让胶囊按文字宽度收缩，再用 minWidth 兜住单字。
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 34),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: selected ? c.blue.withValues(alpha: 0.12) : c.fill,
+            borderRadius: BorderRadius.circular(DgutRadius.full),
+            border: Border.all(
+              color:
+                  selected ? c.blue.withValues(alpha: 0.55) : Colors.transparent,
+              width: 1,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: DgutType.subhead.copyWith(
-            color: selected ? c.blueInk : c.ink2,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: DgutType.subhead.copyWith(
+                  color: selected ? c.blueInk : c.ink2,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
           ),
         ),
       ),

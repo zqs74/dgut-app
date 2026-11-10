@@ -9,6 +9,7 @@ import '../components/dgut_reselect.dart';
 import '../components/dgut_theme_sheet.dart';
 import '../components/dgut_topbar.dart';
 import '../pages/changelog_page.dart';
+import '../pages/course_edit_page.dart';
 import '../pages/home_page.dart';
 import '../pages/me_page.dart';
 import '../pages/messages_page.dart';
@@ -88,7 +89,8 @@ class _DgutShellState extends State<DgutShell> {
     if (p != null) _pagePos.value = p;
   }
 
-  /// ?boot=changelog 直接打开版本历史；?boot=theme 直接弹外观选择（验收用）
+  /// ?boot=changelog 直接打开版本历史；?boot=theme 直接弹外观选择；
+  /// ?boot=course 直接打开课程编辑（验收表单用）——都是验收钩子，不参与正常流程
   void _handleBoot() {
     final String boot = Uri.base.queryParameters['boot'] ?? '';
     if (boot == 'changelog') {
@@ -98,6 +100,10 @@ class _DgutShellState extends State<DgutShell> {
       showDgutThemeSheet(context, widget.themeMode).then((m) {
         if (m != null) widget.onThemeModeChanged(m);
       });
+    } else if (boot == 'course') {
+      Navigator.of(context).push(
+        MaterialPageRoute<bool>(builder: (_) => const CourseEditPage()),
+      );
     }
   }
 
