@@ -91,6 +91,7 @@ class DgutRow extends StatelessWidget {
     this.value,
     this.trailing,
     this.tone = DgutRowTone.none,
+    this.destructive = false,
     this.showChevron = true,
     this.showDivider = true,
     this.onTap,
@@ -103,6 +104,14 @@ class DgutRow extends StatelessWidget {
   final String? value;
   final Widget? trailing;
   final DgutRowTone tone;
+
+  /// 破坏性操作（退出登录、删除）：标题用红色。
+  ///
+  /// **不画红色竖线** —— 那是 [DgutRowTone.urgent] 的语义（"这件事很急"），
+  /// 用在设置项上会显得整页都在报警。破坏性靠字色表达就够，
+  /// 需要"急"的时候才用 tone。
+  final bool destructive;
+
   final bool showChevron;
   final bool showDivider;
   final VoidCallback? onTap;
@@ -132,7 +141,10 @@ class DgutRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: DgutType.body.copyWith(color: c.ink, height: 1.35),
+                  style: DgutType.body.copyWith(
+                    color: destructive ? c.redInk : c.ink,
+                    height: 1.35,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

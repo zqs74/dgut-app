@@ -230,9 +230,8 @@ class MePage extends StatelessWidget {
                     DgutRow(
                       title: '退出登录',
                       subtitle: '清除登录状态与各校园系统的会话',
-                      tone: DgutRowTone.urgent,
+                      destructive: true,
                       showDivider: false,
-                      showChevron: false,
                       onTap: () => _confirmLogout(context, id),
                     ),
                 ],
