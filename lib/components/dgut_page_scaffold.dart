@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../theme/dgut_motion.dart';
 import '../theme/dgut_tokens.dart';
 import 'dgut_header.dart';
+import 'dgut_reselect.dart';
 
 /// 页面骨架：可滚动内容 + 随滚动收缩的大标题 + 顶部 66px 留白。
 ///
@@ -37,6 +39,7 @@ class DgutPageScaffold extends StatefulWidget {
 class _DgutPageScaffoldState extends State<DgutPageScaffold>
     with AutomaticKeepAliveClientMixin {
   final ScrollController _controller = ScrollController();
+  DgutReselect? _reselect;
 
   // PageView 会把离屏页从树上摘掉，保持存活 = 保住各自的滚动位置
   @override
@@ -46,6 +49,28 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
   void initState() {
     super.initState();
     _controller.addListener(_report);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final DgutReselect? next = DgutReselectScope.maybeOf(context);
+    if (identical(next, _reselect)) return;
+    _reselect?.removeListener(_onReselect);
+    _reselect = next;
+    _reselect?.addListener(_onReselect);
+  }
+
+  /// 再点一次当前 tab：信号带的是"哪一页"，用 offset 这个 notifier 实例认领
+  void _onReselect() {
+    if (!identical(_reselect?.target, widget.offset)) return;
+    if (!_controller.hasClients) return;
+    if (_controller.offset <= 0.5) return;
+    _controller.animateTo(
+      0,
+      duration: DgutMotion.enter,
+      curve: DgutMotion.easeOutCubic,
+    );
   }
 
   void _report() {
@@ -61,6 +86,7 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
 
   @override
   void dispose() {
+    _reselect?.removeListener(_onReselect);
     _controller.removeListener(_report);
     _controller.dispose();
     super.dispose();

@@ -35,12 +35,16 @@ class DgutDock extends StatefulWidget {
     required this.items,
     required this.page,
     required this.onSelect,
+    this.onReselect,
     this.itemWidth = 68,
   });
 
   final List<DgutDockItem> items;
   final ValueListenable<double> page;
   final ValueChanged<int> onSelect;
+
+  /// 点中的就是当前页：交回给外壳做「回到顶部」，不切页
+  final ValueChanged<int>? onReselect;
   final double itemWidth;
 
   @override
@@ -52,12 +56,20 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
   static const double _height = 58;
   static const double _iconSize = 20;
 
-  late final AnimationController _position =
-      AnimationController.unbounded(vsync: this, value: widget.page.value);
-  late final AnimationController _press = AnimationController.unbounded(vsync: this);
-  late final AnimationController _stretch = AnimationController.unbounded(vsync: this);
+  late final AnimationController _position = AnimationController.unbounded(
+    vsync: this,
+    value: widget.page.value,
+  );
+  late final AnimationController _press = AnimationController.unbounded(
+    vsync: this,
+  );
+  late final AnimationController _stretch = AnimationController.unbounded(
+    vsync: this,
+  );
   late final AnimationController _jelly = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 320));
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
 
   int? _jellyIndex;
   int _lastSelected = 0;
@@ -121,8 +133,10 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     });
   }
 
-  double _fingerPosition(double x) =>
-      ((x - _inset) / _segmentWidth - .5).clamp(0.0, (widget.items.length - 1).toDouble());
+  double _fingerPosition(double x) => ((x - _inset) / _segmentWidth - .5).clamp(
+    0.0,
+    (widget.items.length - 1).toDouble(),
+  );
 
   Future<void> _spring(
     AnimationController controller,
@@ -135,12 +149,14 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     }
     try {
       await controller
-          .animateWith(SpringSimulation(
-            DgutMotion.spring,
-            controller.value,
-            target,
-            velocity.clamp(-5.0, 5.0),
-          ))
+          .animateWith(
+            SpringSimulation(
+              DgutMotion.spring,
+              controller.value,
+              target,
+              velocity.clamp(-5.0, 5.0),
+            ),
+          )
           .orCancel;
       if (mounted) controller.value = target;
     } on TickerCanceled {
@@ -158,8 +174,11 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     _position.stop();
     _press.stop();
     if (!_reduceMotion) {
-      _press.animateTo(1,
-          duration: DgutMotion.contact, curve: DgutMotion.easeOutCubic);
+      _press.animateTo(
+        1,
+        duration: DgutMotion.contact,
+        curve: DgutMotion.easeOutCubic,
+      );
     }
     _holdFor(420);
     _spring(_position, _fingerPosition(event.localPosition.dx));
@@ -190,8 +209,9 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     _lastTime = t;
     final double finger = _fingerPosition(d.localPosition.dx);
     // 不在每个 pointer 事件上重启动画，只做空间滞后跟随
-    _position.value =
-        _reduceMotion ? finger : _position.value + (finger - _position.value) * .8;
+    _position.value = _reduceMotion
+        ? finger
+        : _position.value + (finger - _position.value) * .8;
     if (!_reduceMotion) {
       _stretch.stop();
       final double target = (speed * .028).clamp(-24.0, 24.0);
@@ -211,8 +231,11 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     final double velocity = (d.primaryVelocity ?? 0) / _segmentWidth;
     final double projected =
         _fingerPosition(_lastX) + (velocity * .055).clamp(-.22, .22);
-    _commit(projected.round().clamp(0, widget.items.length - 1),
-        velocity: velocity);
+    _commit(
+      projected.round().clamp(0, widget.items.length - 1),
+      velocity: velocity,
+      fromDrag: true,
+    );
   }
 
   void _cancel() {
@@ -222,16 +245,22 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
     _spring(_position, widget.page.value);
   }
 
-  void _commit(int index, {double velocity = 0}) {
+  void _commit(int index, {double velocity = 0, bool fromDrag = false}) {
     _dragging = false;
     _release();
     _spring(_position, index.toDouble(), velocity: velocity);
     _holdFor(600);
+    final int current = widget.page.value.round();
     if (index != _lastSelected) {
       _lastSelected = index;
       _runJelly(index);
     }
-    widget.onSelect(index);
+    // 点中的就是当前页 → 交回外壳做「回到顶部」（拖动落到同一格不算）
+    if (!fromDrag && index == current && widget.onReselect != null) {
+      widget.onReselect!(index);
+    } else {
+      widget.onSelect(index);
+    }
   }
 
   void _runJelly(int index) {
@@ -247,13 +276,16 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    final double totalWidth = widget.items.length * widget.itemWidth + _inset * 2;
+    final double totalWidth =
+        widget.items.length * widget.itemWidth + _inset * 2;
     _segmentWidth = widget.itemWidth;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_position, _press, _stretch]),
       builder: (context, _) {
-        final double pressure = _reduceMotion ? 0 : _press.value.clamp(0.0, 1.0);
+        final double pressure = _reduceMotion
+            ? 0
+            : _press.value.clamp(0.0, 1.0);
         final double flow = _reduceMotion ? 0 : _stretch.value;
 
         return Transform.translate(
@@ -270,8 +302,9 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
                   filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: c.glassDock
-                          .withValues(alpha: context.isDark ? 0.46 : 0.38),
+                      color: c.glassDock.withValues(
+                        alpha: context.isDark ? 0.46 : 0.38,
+                      ),
                       borderRadius: BorderRadius.circular(DgutRadius.full),
                       border: Border.all(color: c.glassEdge, width: 1),
                     ),
@@ -286,13 +319,15 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(DgutRadius.full)),
+                                top: Radius.circular(DgutRadius.full),
+                              ),
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.white.withValues(
-                                      alpha: context.isDark ? .10 : .55),
+                                    alpha: context.isDark ? .10 : .55,
+                                  ),
                                   Colors.white.withValues(alpha: 0),
                                 ],
                               ),
@@ -318,9 +353,11 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
                               behavior: HitTestBehavior.opaque,
                               onTapUp: (d) {
                                 if (!_dragging && !_pointerCancelled) {
-                                  _commit(_fingerPosition(d.localPosition.dx)
-                                      .round()
-                                      .clamp(0, widget.items.length - 1));
+                                  _commit(
+                                    _fingerPosition(d.localPosition.dx)
+                                        .round()
+                                        .clamp(0, widget.items.length - 1),
+                                  );
                                 }
                               },
                               onHorizontalDragStart: _dragStart,
@@ -328,11 +365,16 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
                               onHorizontalDragEnd: _dragEnd,
                               onHorizontalDragCancel: _cancel,
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: _inset),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: _inset,
+                                ),
                                 child: Row(
                                   children: [
-                                    for (var i = 0; i < widget.items.length; i++)
+                                    for (
+                                      var i = 0;
+                                      i < widget.items.length;
+                                      i++
+                                    )
                                       _entry(i, c),
                                   ],
                                 ),
@@ -388,7 +430,10 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
       icon = Transform(
         alignment: Alignment.center,
         transform: Matrix4.diagonal3Values(
-            DgutMotion.jellyX(t), DgutMotion.jellyY(t), 1),
+          DgutMotion.jellyX(t),
+          DgutMotion.jellyY(t),
+          1,
+        ),
         child: icon,
       );
     } else {
@@ -410,7 +455,9 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.2,
-                  fontWeight: proximity > .5 ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: proximity > .5
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                   color: color,
                 ),
               ),

@@ -33,6 +33,7 @@ const List<ChangelogEntry> kChangelog = [
         title: '新增',
         items: [
           '在底部 Dock 上左右拖动即可切页，松手才提交',
+          '再点当前 tab 回到页面顶部',
         ],
       ),
       ChangelogSection(

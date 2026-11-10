@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/dgut_dock.dart';
 import '../components/dgut_edge_blur.dart';
+import '../components/dgut_reselect.dart';
 import '../components/dgut_theme_sheet.dart';
 import '../components/dgut_topbar.dart';
 import '../pages/changelog_page.dart';
@@ -40,12 +41,13 @@ class _DgutShellState extends State<DgutShell> {
   late int _index = widget.initialIndex.clamp(0, 4);
   late final PageController _pc = PageController(initialPage: _index);
   final ValueNotifier<double> _pagePos = ValueNotifier<double>(0);
+  final DgutReselect _reselect = DgutReselect();
 
   final List<ValueNotifier<DgutScrollInfo>> _scroll =
       List<ValueNotifier<DgutScrollInfo>>.generate(
-    5,
-    (_) => ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero),
-  );
+        5,
+        (_) => ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero),
+      );
 
   static const List<String> _titles = ['首页', '课表', '服务', '消息', '我的'];
 
@@ -87,9 +89,8 @@ class _DgutShellState extends State<DgutShell> {
   void _handleBoot() {
     final String boot = Uri.base.queryParameters['boot'] ?? '';
     if (boot == 'changelog') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const ChangelogPage()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const ChangelogPage()));
     } else if (boot == 'theme') {
       showDgutThemeSheet(context, widget.themeMode).then((m) {
         if (m != null) widget.onThemeModeChanged(m);
@@ -112,6 +113,7 @@ class _DgutShellState extends State<DgutShell> {
     _pc.removeListener(_syncPage);
     _pc.dispose();
     _pagePos.dispose();
+    _reselect.dispose();
     for (final n in _scroll) {
       n.dispose();
     }
@@ -133,9 +135,9 @@ class _DgutShellState extends State<DgutShell> {
         offset: _scroll[4],
         themeMode: widget.themeMode,
         onThemeModeChanged: widget.onThemeModeChanged,
-        onOpenChangelog: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const ChangelogPage()),
-        ),
+        onOpenChangelog: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const ChangelogPage())),
       ),
     ];
 
@@ -146,89 +148,94 @@ class _DgutShellState extends State<DgutShell> {
           // 手机优先：桌面 / 平板窗口里把内容收到手机宽度并居中
           constraints: const BoxConstraints(maxWidth: 460),
           child: SizedBox.expand(
-            child: Stack(
-              children: [
-                // 背景固定不动 —— 它是"渐进运动"里最慢的一层
-                const Positioned.fill(child: _AmbientBg()),
+            child: DgutReselectScope(
+              notifier: _reselect,
+              child: Stack(
+                children: [
+                  // 背景固定不动 —— 它是"渐进运动"里最慢的一层
+                  const Positioned.fill(child: _AmbientBg()),
 
-                // 页面：PageView 横向切页
-                PageView.builder(
-                  controller: _pc,
-                  itemCount: pages.length,
-                  onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) => _ProgressivePage(
-                    page: _pagePos,
-                    index: i,
-                    child: pages[i],
-                  ),
-                ),
-
-                // 底部边缘（在 Dock 之下）
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: AnimatedBuilder(
-                    animation: _active,
-                    builder: (context, _) {
-                      final DgutScrollInfo s = _active.value;
-                      final double depth = DgutMotion.edgeDepth(s.rest);
-                      return DgutEdgeBlur(
-                        atTop: false,
-                        sigma: DgutMotion.edgeSigma(depth),
-                        strength:
-                            s.max <= 10 ? 0 : DgutMotion.edgeStrength(depth),
-                      );
-                    },
-                  ),
-                ),
-
-                // 顶部边缘：滚过 2px 开始起，18px 内渐强到满（原型的 140ms 过渡）
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: AnimatedBuilder(
-                    animation: _active,
-                    builder: (context, _) {
-                      final DgutScrollInfo s = _active.value;
-                      return DgutEdgeBlur(
-                        atTop: true,
-                        sigma: DgutMotion.edgeSigmaMax,
-                        strength: (s.pixels / 18).clamp(0.0, 1.0),
-                      );
-                    },
-                  ),
-                ),
-
-                // 顶栏
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: AnimatedBuilder(
-                    animation: _active,
-                    builder: (context, _) => DgutTopBar(
-                      title: _titles[_index],
-                      offset: _active.value.pixels,
-                    ),
-                  ),
-                ),
-
-                // Dock：胶囊自己定宽，居中
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 20,
-                  child: Center(
-                    child: DgutDock(
-                      items: _dockItems,
+                  // 页面：PageView 横向切页
+                  PageView.builder(
+                    controller: _pc,
+                    itemCount: pages.length,
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemBuilder: (context, i) => _ProgressivePage(
                       page: _pagePos,
-                      onSelect: _goTo,
+                      index: i,
+                      child: pages[i],
                     ),
                   ),
-                ),
-              ],
+
+                  // 底部边缘（在 Dock 之下）
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: AnimatedBuilder(
+                      animation: _active,
+                      builder: (context, _) {
+                        final DgutScrollInfo s = _active.value;
+                        final double depth = DgutMotion.edgeDepth(s.rest);
+                        return DgutEdgeBlur(
+                          atTop: false,
+                          sigma: DgutMotion.edgeSigma(depth),
+                          strength: s.max <= 10
+                              ? 0
+                              : DgutMotion.edgeStrength(depth),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // 顶部边缘：滚过 2px 开始起，18px 内渐强到满（原型的 140ms 过渡）
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: AnimatedBuilder(
+                      animation: _active,
+                      builder: (context, _) {
+                        final DgutScrollInfo s = _active.value;
+                        return DgutEdgeBlur(
+                          atTop: true,
+                          sigma: DgutMotion.edgeSigmaMax,
+                          strength: (s.pixels / 18).clamp(0.0, 1.0),
+                        );
+                      },
+                    ),
+                  ),
+
+                  // 顶栏
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: AnimatedBuilder(
+                      animation: _active,
+                      builder: (context, _) => DgutTopBar(
+                        title: _titles[_index],
+                        offset: _active.value.pixels,
+                      ),
+                    ),
+                  ),
+
+                  // Dock：胶囊自己定宽，居中
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 20,
+                    child: Center(
+                      child: DgutDock(
+                        items: _dockItems,
+                        page: _pagePos,
+                        onSelect: _goTo,
+                        onReselect: (_) => _reselect.fire(_scroll[_index]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
