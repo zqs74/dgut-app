@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 
 import 'shell/dgut_shell.dart';
+import 'store/store.dart';
+import 'store/timetable_repository.dart';
 import 'theme/dgut_motion.dart';
 import 'theme/dgut_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 先把本机存储与课表读进来，再起界面 —— 否则第一帧会先闪一下空课表再被数据顶掉
+  await Store.instance.init();
+  final TimetableRepository repo = TimetableRepository.instance;
+  await repo.load();
+
+  // 验收用的深链：?seed=1 写入示例课表（仅在为空时），?seed=reset 清空
+  final String seed = Uri.base.queryParameters['seed'] ?? '';
+  if (seed == '1') {
+    await repo.seedDemo();
+  } else if (seed == 'reset') {
+    await repo.clearCourses();
+  }
+
   runApp(const DgutApp());
 }
 

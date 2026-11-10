@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.5.3+11
+version: 0.6.0+12
 
 environment:
   sdk: ^3.13.7
@@ -38,6 +38,10 @@ dependencies:
   # 自动更新：拉 GitHub Releases 清单、下载 apk 到应用私有目录
   # 只用纯 Dart 的 http；不用 path_provider（它是原生插件，Windows 构建需要开发者模式建符号链接）
   http: ^1.2.0
+
+  # 本机存储：课表、学期日历、覆盖层、设置。
+  # 四端（Android / iOS / Web / Windows）都有实现；不用 sqflite —— 它没有 Web 与 Windows 实现
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

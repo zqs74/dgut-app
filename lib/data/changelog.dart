@@ -22,10 +22,30 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.5.3';
+const String kCurrentVersion = '0.6.0';
 
 const List<ChangelogEntry> kChangelog = [
   ChangelogEntry(
+    version: 'v0.6.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '课表可以自己建：填课程名、星期、节次与上课周，单周和跳周都能表达',
+          '点课块查看这门课的全部时段、教师与教室，可逐段编辑或整门删除',
+          '本周概况显示真实的门数、节数与撞课数',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '「第几周」按开学日期自动算，不再写死',
+          '非本周的课淡显并在左侧标虚线，一眼看出这周不上',
+        ],
+      ),
+    ],
+  ),  ChangelogEntry(
     version: 'v0.5.3',
     date: '2026-11-10',
     sections: [

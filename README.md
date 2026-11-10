@@ -25,7 +25,9 @@ flutter run -d windows    # Windows 桌面原生窗口
 | `?demo=1` | 每 1.8 秒自动轮播五页，用来验收切页过渡与果冻 |
 | `?boot=changelog` | 启动即打开版本更新历史 |
 | `?boot=theme` | 启动即弹外观选择浮层 |
-| `?seg=1` | 消息页默认停在「通知」
+| `?seg=1` | 消息页默认停在「通知」 |
+| `?seed=1` | 写入 5 门**示例**课（仅在课表为空时），用于验收网格、撞课、单周与非本周淡显 |
+| `?seed=reset` | 清空全部课表与覆盖层 |
 
 例：`http://127.0.0.1:8901/?p=1&dark=1`
 
@@ -46,7 +48,16 @@ lib/
 │   ├── dgut_timeline.dart 一天的时间线
 │   ├── dgut_theme_sheet.dart 外观三选一浮层
 │   └── dgut_page_scaffold.dart 页面骨架（滚动驱动收口）
-├── data/changelog.dart    版本记录数据（与根目录 CHANGELOG.md 同源）
+├── model/
+│   ├── course.dart        课程 + 时段（一门课挂多段）、周集合压缩文案
+│   ├── term_calendar.dart 学期日历：周次与日期互算、调休例外
+│   └── course_override.dart 单节覆盖层（换教室 / 停课，界面待接）
+├── store/
+│   ├── store.dart         本机存储门面（shared_preferences + JSON）
+│   └── timetable_repository.dart 课表仓储：读写、按来源合并、当周统计
+├── data/
+│   ├── default_term.dart  默认学期（第 1 周周一 = 2026-08-31）
+│   └── changelog.dart     版本记录数据（与根目录 CHANGELOG.md 同源）
 ├── pages/                 五页 + changelog_page
 ├── shell/dgut_shell.dart  外壳：PageView 切页 + 顶栏 + 上下边缘 + Dock + 环境光
 └── main.dart              主题模式切换与深链
@@ -77,7 +88,8 @@ lib/
 - [x] v0.2.0：PageView 左右切页 + 渐进式运动、明暗改浮层三选一、消息分段动画、版本更新历史、顶栏去底色与横线、Dock 玻璃层
 - [x] v0.3.0：应用内更新（检查 → 下载 → 唤起系统安装器）
 - [x] v0.4.0：顶栏与边缘的两层模糊合并为一层；Dock 指示胶囊跟手、按压形变、拖动切页
-- [ ] M2：课表数据层（三源导入）、课块详情 sheet
+- [x] v0.6.0：课表数据骨架 —— 本地存储、手动录入、周视图接真数据、课块详情浮层、按来源合并
+- [ ] M2 剩余：粘贴导入与教务读取两条数据源、侧滑式详情（.dg-sheet + Hero）
 - [ ] M3：服务页搜索与折叠的真实数据
 - [ ] M4：Android 真机验收（apk 已出，应用宝安装需手点确认）
 - [ ] iOS：需要 macOS
