@@ -20,6 +20,7 @@ class DgutLargeHeader extends StatelessWidget {
     this.morph = 0.0,
     this.leftInset = 0,
     this.opacity = 1.0,
+    this.topGap = 0,
   });
 
   final String eyebrow;
@@ -38,6 +39,10 @@ class DgutLargeHeader extends StatelessWidget {
   /// 整块标题的不透明度（由骨架按滚动像素控制淡出时机）
   final double opacity;
 
+  /// 二级页面额外下移：返回按钮是 44px 圆钮、底边在 26+44 处，
+  /// 眉标从 66 起会顶到按钮下沿，所以要往下让一点（见骨架里的 14）
+  final double topGap;
+
   /// 顶部内边距 + 一行眉标 + 标题（大标题行高 38）
   static const double height = 66 + 14 + 10 + 38;
 
@@ -53,7 +58,8 @@ class DgutLargeHeader extends StatelessWidget {
     final double eyebrowFade = ((m - .15) / .35).clamp(0.0, 1.0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(DgutSpace.pad, 66, DgutSpace.pad, 0),
+      padding: EdgeInsets.fromLTRB(
+          DgutSpace.pad, 66 + topGap, DgutSpace.pad, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

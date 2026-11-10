@@ -161,6 +161,8 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
                   morph: t,
                   leftInset: _leading,
                   opacity: fade,
+                  // 返回按钮底边落在 26+44 处，眉标从 66 起会顶上去，二级页整体下让 14
+                  topGap: _hasBack ? 14 : 0,
                 ),
               );
             },

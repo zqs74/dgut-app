@@ -22,9 +22,21 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.6.1';
+const String kCurrentVersion = '0.6.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.6.2',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '修复二级页面返回按钮压住上方灰色小标签的问题',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.6.1',
     date: '2026-11-10',
