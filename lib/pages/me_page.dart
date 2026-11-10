@@ -142,7 +142,6 @@ class MePage extends StatelessWidget {
               if (UpdateService.isSupported)
                 DgutRow(
                   title: '检查更新',
-                  subtitle: '从 GitHub Releases 取最新版',
                   value: 'v$kCurrentVersion',
                   onTap: () => showDgutUpdateSheet(context),
                 ),

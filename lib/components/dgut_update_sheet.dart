@@ -33,7 +33,7 @@ class _UpdateSheetState extends State<_UpdateSheet>
   UpdateInfo? _info;
   double _progress = 0;
   String? _error;
-  String _permissionHint = '系统还没允许这个 App 安装 APK。';
+  String _permissionHint = '需要允许安装未知应用';
 
   /// 失败发生在下载阶段时，「重试」应该重下而不是重新检查
   bool _failedOnDownload = false;
@@ -88,7 +88,7 @@ class _UpdateSheetState extends State<_UpdateSheet>
       if (!mounted) return;
       setState(() {
         _phase = _Phase.error;
-        _error = '检查失败：$e';
+        _error = '检查失败';
       });
     }
   }
@@ -124,7 +124,7 @@ class _UpdateSheetState extends State<_UpdateSheet>
       if (!mounted) return;
       setState(() {
         _phase = _Phase.error;
-        _error = '下载中断：$e';
+        _error = '下载失败';
         _failedOnDownload = true;
       });
     }
@@ -136,7 +136,7 @@ class _UpdateSheetState extends State<_UpdateSheet>
     if (!ok) {
       setState(() {
         _phase = _Phase.error;
-        _error = '打不开系统设置页。请手动去：设置 → 应用 → 莞工 App → 安装未知应用 → 允许。';
+        _error = '打不开设置页，请手动允许安装未知应用';
         _failedOnDownload = false;
       });
       return;
@@ -332,9 +332,6 @@ class _UpdateSheetState extends State<_UpdateSheet>
                 style: DgutType.body.copyWith(
                     color: c.ink, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text('在系统弹窗里点「安装」完成更新；没看到弹窗就再点一次下载。',
-                style: DgutType.footnote
-                    .copyWith(color: c.ink3, height: 1.6)),
           ],
         );
 

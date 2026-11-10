@@ -69,14 +69,7 @@ class _MessagesPageState extends State<MessagesPage> {
             child: _seg == 0 ? _todoBlock(c) : _noticeBlock(c),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              DgutSpace.pad, DgutSpace.s3, DgutSpace.pad, 0),
-          child: Text(
-            '消息只显示最近 7 天，过期归档',
-            style: DgutType.caption1.copyWith(color: c.ink3),
-          ),
-        ),
+
       ],
     );
   }

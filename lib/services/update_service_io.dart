@@ -28,9 +28,7 @@ Future<UpdateInfo?> checkImpl(String repo, String currentVersion) async {
 
   if (res.statusCode == 404) return null; // 仓库还没有 Release
   if (res.statusCode != 200) {
-    throw UpdateException(
-      'GitHub 返回 HTTP ${res.statusCode}，暂时取不到版本信息。稍后重试。',
-    );
+    throw UpdateException('GitHub 返回 HTTP ${res.statusCode}');
   }
 
   final Map<String, dynamic> json =
@@ -53,7 +51,7 @@ Future<UpdateInfo?> checkImpl(String repo, String currentVersion) async {
     }
   }
   if (apk == null) {
-    throw const UpdateException('这版 Release 里没有 apk 文件，去 GitHub 发布页看一眼。');
+    throw const UpdateException('这版 Release 里没有 apk 文件');
   }
 
   return UpdateInfo(
@@ -73,7 +71,7 @@ Future<void> downloadAndInstallImpl(
 ) async {
   if (!await canInstallImpl()) {
     throw const UpdateException(
-      '系统还没允许这个 App 安装 APK。点下面的「去开启」，在「安装未知应用」里打开，返回后会自动继续。',
+      '需要允许安装未知应用',
       needsInstallPermission: true,
     );
   }
@@ -96,10 +94,10 @@ Future<void> downloadAndInstallImpl(
           .send(http.Request('GET', Uri.parse(info.apkUrl)))
           .timeout(const Duration(seconds: 20));
     } catch (e) {
-      throw _mapNetworkError(e, action: '下载安装包');
+      throw _mapNetworkError(e, action: '下载');
     }
     if (res.statusCode != 200) {
-      throw UpdateException('下载返回 HTTP ${res.statusCode}，换一次网络再试。');
+      throw UpdateException('下载失败：HTTP ${res.statusCode}');
     }
     final int total = res.contentLength ?? info.sizeBytes;
     final IOSink sink = target.openWrite();
@@ -114,7 +112,7 @@ Future<void> downloadAndInstallImpl(
         }
       }
     } catch (e) {
-      throw _mapNetworkError(e, action: '下载安装包');
+      throw _mapNetworkError(e, action: '下载');
     } finally {
       await sink.flush();
       await sink.close();
@@ -128,13 +126,13 @@ Future<void> downloadAndInstallImpl(
   } on PlatformException catch (e) {
     if (e.code == 'permission_denied') {
       throw const UpdateException(
-        '系统还没允许这个 App 安装 APK。点下面的「去开启」，在「安装未知应用」里打开，返回后会自动继续。',
+        '需要允许安装未知应用',
         needsInstallPermission: true,
       );
     }
-    throw UpdateException('唤起系统安装器失败：${e.message ?? e.code}');
+    throw UpdateException('唤起安装器失败：${e.message ?? e.code}');
   } on MissingPluginException {
-    throw const UpdateException('当前平台没有安装能力（只有 Android 支持应用内更新）。');
+    throw const UpdateException('当前平台不支持安装');
   }
 }
 
@@ -172,22 +170,21 @@ UpdateException _mapNetworkError(Object e, {required String action}) {
       s.contains('Connection terminated') ||
       s.contains('handshake')) {
     return UpdateException(
-      '$action失败：和 GitHub 的加密握手被中断。国内网络直连 GitHub 常被掐，'
-      '换 Wi-Fi 或移动数据再试；能开代理的话更稳。',
+      '连不上 GitHub，检查网络',
     );
   }
   if (e is SocketException || s.contains('SocketException')) {
     return UpdateException(
-      '$action失败：连不上 GitHub（域名解析或端口被拦）。检查手机网络后重试。',
+      '连不上 GitHub，检查网络',
     );
   }
   if (e is TimeoutException || s.contains('TimeoutException')) {
-    return UpdateException('$action超时：12 秒内 GitHub 没有响应。网络太慢或被拦，换个网络再试。');
+    return UpdateException('连接 GitHub 超时，检查网络');
   }
   if (e is http.ClientException || s.contains('ClientException')) {
-    return UpdateException('$action中断：连接被对端关掉了，重试一次。');
+    return UpdateException('连接中断，重试一次');
   }
-  return UpdateException('$action失败：$s');
+  return UpdateException('$action失败');
 }
 
 /// 语义化版本比较：remote 是否比 local 新

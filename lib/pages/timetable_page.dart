@@ -106,11 +106,6 @@ class TimetablePage extends StatelessWidget {
             dgutPlain(' 处撞课'),
           ],
         ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(
-              DgutSpace.pad, DgutSpace.s1, DgutSpace.pad, 0),
-          child: DgutLegend('点任意课块看教室、教师与周次。同一门课只在网格里出现一次，不再重复成列表。'),
-        ),
       ],
     );
   }

@@ -22,9 +22,22 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.5.0';
+const String kCurrentVersion = '0.5.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.5.1',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '更新失败只说实话：连不上 GitHub 就写连不上，不再解释原因',
+          '删掉课表、消息、检查更新里解释性的一句说明',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.5.0',
     date: '2026-11-10',
