@@ -29,7 +29,8 @@ void main() {
 
     expect(find.text('课表'), findsWidgets);
     expect(find.text('还没有课表'), findsOneWidget);
-    expect(find.text('添加第一门课'), findsOneWidget);
+    expect(find.text('从教务导入'), findsOneWidget);
+    expect(find.text('手动添加'), findsOneWidget);
   });
 
   testWidgets('有课时渲染网格与统计', (tester) async {

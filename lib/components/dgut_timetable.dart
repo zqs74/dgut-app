@@ -548,9 +548,13 @@ class DgutCourseBlock extends StatelessWidget {
         tick = true;
     }
 
+    // 跟随块配色时按块的实际亮度选黑/白字，浅色底也读得清
     final bool lightText =
         a.textColor == BlockTextColor.white ||
-        (a.textColor == BlockTextColor.tone && a.style == BlockStyle.solid);
+        (a.textColor == BlockTextColor.tone &&
+            a.style == BlockStyle.solid &&
+            ThemeData.estimateBrightnessForColor(Color.alphaBlend(bg, c.bg)) ==
+                Brightness.dark);
     final Color ink = switch (a.textColor) {
       BlockTextColor.ink => c.ink,
       BlockTextColor.white => Colors.white,
