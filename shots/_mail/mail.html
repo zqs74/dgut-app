@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>莞工统一 App · 第一版原型</title>
+</head>
+<body style="margin:0;padding:0;background:#f2f2f5;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f5;padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:96%;background:#ffffff;border-radius:14px;overflow:hidden;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;">
+
+  <!-- 抬头 -->
+  <tr><td style="padding:30px 32px 6px;">
+    <div style="font-size:11px;letter-spacing:2px;color:#8a8a92;font-weight:600;">2026-11-10 凌晨 · 阿澈</div>
+    <div style="font-size:26px;font-weight:700;color:#0b0b0f;margin-top:10px;letter-spacing:-.5px;">莞工统一 App · 第一版原型跑起来了</div>
+    <div style="font-size:14px;color:#5a5a63;margin-top:10px;line-height:1.7;">
+      你说今晚交给我，明早要一个 App 原型。现在五页、玻璃、滚动动效、明暗切换都在 Flutter 里跑通了，一个命令就能打开。
+    </div>
+  </td></tr>
+
+  <!-- 五页 -->
+  <tr><td style="padding:18px 24px 0;">
+    <img src="cid:sheet-a.png" width="592" style="width:100%;display:block;border-radius:10px;border:1px solid #e6e6ea;" alt="五页原型">
+    <div style="font-size:12px;color:#8a8a92;margin-top:8px;">首页 / 课表 / 服务 / 消息 / 我的 —— Chrome 430×932 实拍</div>
+  </td></tr>
+
+  <!-- 今晚做了什么 -->
+  <tr><td style="padding:26px 32px 0;">
+    <div style="font-size:15px;font-weight:700;color:#0b0b0f;margin-bottom:10px;">今晚做完的六件事</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13.5px;color:#2a2a30;line-height:1.75;">
+      <tr><td width="22" valign="top" style="color:#0e7a5f;font-weight:700;">1</td><td>把你拍板的 5 项决定写进交接单 v2（鸿蒙另做、以代码为动效真源、补齐 token、工程参数进 M1、课表借鉴开源）</td></tr>
+      <tr><td valign="top" style="color:#0e7a5f;font-weight:700;">2</td><td>核了四个开源课表：SchedU、拾光课程表、WakeUp Kotlin 版、ClassIsland，功能集归纳进 §8</td></tr>
+      <tr><td valign="top" style="color:#0e7a5f;font-weight:700;">3</td><td>建工程 <span style="font-family:Consolas,monospace;font-size:12.5px;background:#f4f4f7;padding:1px 5px;border-radius:4px;">dgut_app</span>（windows / web / android 三平台，Flutter 3.47.8）</td></tr>
+      <tr><td valign="top" style="color:#0e7a5f;font-weight:700;">4</td><td>写 theme 层 31 色 + 12 级字阶，组件层 16 个，五页 + 外壳，共 16 个 Dart 文件约 2800 行</td></tr>
+      <tr><td valign="top" style="color:#0e7a5f;font-weight:700;">5</td><td>动效按 <span style="font-family:Consolas,monospace;font-size:12.5px;">dgut.js</span> 的真实实现重建，不是按文档里那几条写错的公式</td></tr>
+      <tr><td valign="top" style="color:#0e7a5f;font-weight:700;">6</td><td><span style="font-family:Consolas,monospace;font-size:12.5px;">flutter analyze</span> 零 error，Chrome 上逐页截图验收</td></tr>
+    </table>
+  </td></tr>
+
+  <!-- 滚动 -->
+  <tr><td style="padding:22px 24px 0;">
+    <img src="cid:sheet-b.png" width="592" style="width:100%;display:block;border-radius:10px;border:1px solid #e6e6ea;" alt="滚动顶栏与深色">
+    <div style="font-size:12px;color:#8a8a92;margin-top:8px;">左：滚过 34px 顶栏浮现、内容从玻璃下穿过并被模糊。右：深色课表</div>
+  </td></tr>
+
+  <!-- 与原型的差异 -->
+  <tr><td style="padding:26px 32px 0;">
+    <div style="font-size:15px;font-weight:700;color:#0b0b0f;margin-bottom:10px;">与网页原型的 5 处差异</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#2a2a30;line-height:1.7;">
+      <tr><td width="22" valign="top" style="color:#c7150b;font-weight:700;">·</td><td>玻璃的饱和度增强没做（Flutter BackdropFilter 只能纯模糊，要 shader），模糊区略灰</td></tr>
+      <tr><td valign="top" style="color:#c7150b;font-weight:700;">·</td><td>撞课改成上下各占一半、7.5px 单行课名 —— 430px 宽下左右分栏会窄到竖排</td></tr>
+      <tr><td valign="top" style="color:#c7150b;font-weight:700;">·</td><td>环境光用圆形径向渐变近似 CSS 的椭圆</td></tr>
+      <tr><td valign="top" style="color:#c7150b;font-weight:700;">·</td><td>待办行红竖线贴内容左边缘（Flutter 不允许负 margin），比原型右移 14px</td></tr>
+      <tr><td valign="top" style="color:#c7150b;font-weight:700;">·</td><td>服务页"最近使用"三个入口加了图标，原型是纯文字行</td></tr>
+    </table>
+    <div style="font-size:12.5px;color:#8a8a92;margin-top:10px;line-height:1.65;">后两条要不要回退成原型的克制度，等你一句话。</div>
+  </td></tr>
+
+  <!-- 怎么跑 -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="font-size:15px;font-weight:700;color:#0b0b0f;margin-bottom:10px;">怎么看</div>
+    <div style="font-family:Consolas,monospace;font-size:12.5px;color:#2a2a30;background:#f6f6f9;border:1px solid #e6e6ea;border-radius:8px;padding:12px 14px;line-height:1.9;white-space:pre-wrap;">$env:Path='D:\16037\Dev\flutter\bin;'+$env:Path
+cd D:\16037\Documents\DSHproject\dgut_app
+flutter run -d chrome</div>
+    <div style="font-size:12.5px;color:#5a5a63;margin-top:10px;line-height:1.7;">
+      深链：<span style="font-family:Consolas,monospace;font-size:12px;">?p=0..4</span> 直接落五页，<span style="font-family:Consolas,monospace;font-size:12px;">?dark=1</span> 强制深色，例 <span style="font-family:Consolas,monospace;font-size:12px;">?p=1&amp;dark=1</span>。<br>
+      Windows 桌面窗口用 <span style="font-family:Consolas,monospace;font-size:12px;">flutter run -d windows</span>。
+    </div>
+  </td></tr>
+
+  <!-- 还没做 -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="font-size:15px;font-weight:700;color:#0b0b0f;margin-bottom:10px;">还没做（按我排的顺序）</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#2a2a30;line-height:1.7;">
+      <tr><td width="22" valign="top" style="color:#8a8a92;">1</td><td>页面切换与果冻动效只能手点才能看到，截图验证不了 —— 你早上划一下 Dock</td></tr>
+      <tr><td valign="top" style="color:#8a8a92;">2</td><td>Android apk：SDK 在装（装有 <span style="font-family:Consolas,monospace;font-size:12px;">D:\16037\Dev\Android\sdk</span>），应用宝引擎在跑但 <span style="font-family:Consolas,monospace;font-size:12px;">adb devices</span> 还是空，没有已启动的安卓实例</td></tr>
+      <tr><td valign="top" style="color:#8a8a92;">3</td><td>课块详情页（侧滑 .dg-sheet + Hero 飞行）</td></tr>
+      <tr><td valign="top" style="color:#8a8a92;">4</td><td>课表真实数据层：现在是 5 条硬编码，三源导入还没写</td></tr>
+    </table>
+  </td></tr>
+
+  <!-- 文件 -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="font-size:15px;font-weight:700;color:#0b0b0f;margin-bottom:10px;">文件位置</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12.5px;color:#2a2a30;line-height:1.9;">
+      <tr><td width="96" style="color:#8a8a92;">工程</td><td style="font-family:Consolas,monospace;">D:\16037\Documents\DSHproject\dgut_app</td></tr>
+      <tr><td style="color:#8a8a92;">交接单 v2</td><td style="font-family:Consolas,monospace;">…\大三上\莞工统一App方案\motion\交接-Flutter实现-2026-11-10-v2.md</td></tr>
+      <tr><td style="color:#8a8a92;">交付说明</td><td style="font-family:Consolas,monospace;">…\motion\交付-Flutter原型M1-2026-11-10.md</td></tr>
+      <tr><td style="color:#8a8a92;">截图</td><td style="font-family:Consolas,monospace;">…\dgut_app\shots</td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:26px 32px 30px;">
+    <div style="border-top:1px solid #e6e6ea;padding-top:16px;font-size:12.5px;color:#8a8a92;line-height:1.7;">
+      晚安。早上直接 <span style="font-family:Consolas,monospace;font-size:12px;">flutter run -d chrome</span> 就能看到，不满意的地方写在回信里，我接着改。
+    </div>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

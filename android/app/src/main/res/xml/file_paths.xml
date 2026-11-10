@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider 的可共享路径：自动更新把 apk 下到应用私有目录，再从这里交给系统安装器 -->
+<paths>
+    <files-path name="internal_files" path="." />
+    <cache-path name="internal_cache" path="." />
+    <external-files-path name="external_files" path="." />
+    <external-cache-path name="external_cache" path="." />
+</paths>
