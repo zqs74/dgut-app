@@ -154,13 +154,14 @@ class _TimeTablePageState extends State<TimeTablePage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox(
-                            width: 64,
+                            width: 72,
                             height: 34,
                             child: TextField(
                               controller: _durationCtrl,
                               focusNode: _durationFocus,
                               keyboardType: TextInputType.number,
                               textAlign: TextAlign.center,
+                              textAlignVertical: TextAlignVertical.center,
                               inputFormatters: <TextInputFormatter>[
                                 FilteringTextInputFormatter.digitsOnly,
                                 LengthLimitingTextInputFormatter(3),
@@ -179,9 +180,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
                                 isDense: true,
                                 filled: true,
                                 fillColor: c.fill,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
+                                contentPadding: EdgeInsets.zero,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
                                     DgutRadius.r1,
@@ -300,7 +299,7 @@ class _TimeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? c.fill : c.fill.withValues(alpha: 0.4),
+          color: enabled ? c.fill : Colors.transparent,
           borderRadius: BorderRadius.circular(DgutRadius.r1),
         ),
         child: Text(

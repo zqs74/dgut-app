@@ -65,12 +65,15 @@ class _TableListPageState extends State<TableListPage> {
         children: [
           DgutRow(
             title: '重命名',
+            showChevron: false,
+            showDivider: _repo.tables.length > 1,
             onTap: () => Navigator.of(context).pop('rename'),
           ),
           if (_repo.tables.length > 1)
             DgutRow(
               title: '删除',
               tone: DgutRowTone.urgent,
+              showChevron: false,
               showDivider: false,
               onTap: () => Navigator.of(context).pop('delete'),
             ),

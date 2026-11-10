@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.8.2';
+const String kCurrentVersion = '0.8.3';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.8.3',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '浮层改成离底边浮起的圆角卡片，四周留 10',
+          '菜单里的箭头与多余分割线去掉',
+          '时长输入框数字居中，固定时长时结束时间改淡字不占按钮',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.8.2',
     date: '2026-11-10',
