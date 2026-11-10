@@ -22,9 +22,27 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.13.0';
+const String kCurrentVersion = '0.13.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.13.1',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '登录页右下角可切换手机 / 电脑端显示，表格挤的时候能看 PC 版',
+          '返回与切换按钮改成玻璃材质，与二级页返回按钮一致',
+        ],
+      ),
+      ChangelogSection(
+        title: '修复',
+        items: ['登录后落在学工的功能页上读不到身份，改成自动打开基本信息页'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.13.0',
     date: '2026-11-10',

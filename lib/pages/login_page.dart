@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +29,14 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   /// 学工系统首页。没登录时它会 302 到 `auth.dgut.edu.cn`，
-  /// 登录完落回这里，默认 iframe 就是「基本信息」页。
+  /// 登录完落回这里 —— 但**不一定**落在基本信息页：学工会记住上次访问的功能页
+  /// （实测落到过「综合测评管理」），所以下面还要主动拉一次。
   static const String _entryUrl = 'https://stu.dgut.edu.cn/index.jsp';
+
+  /// 基本信息页：七个字段都在这张表里。它是首页 iframe 的 src，
+  /// 单独打开也是完整页面。
+  static const String _infoUrl =
+      'https://stu.dgut.edu.cn/student/basicinfo/basicInfo.jsp';
 
   /// 递归往下找 iframe，拿到第一个同时含「学号」「姓名」的正文。
   ///
@@ -52,7 +59,15 @@ class _LoginPageState extends State<LoginPage> {
   Timer? _timeout;
   bool _busy = false;
   bool _failed = false;
+  bool _pulledToInfo = false;
   String _status = '正在打开学工系统';
+
+  /// 显示模式：默认按手机宽度重排；切到「电脑端」时按 1280 宽渲染，
+  /// 看得到 PC 版的完整表格（缩小后可双指放大）。
+  ///
+  /// 学工是 PC 站，`basicInfo.jsp` 那张表在窄屏上会挤成一列一列的字；
+  /// 但它的菜单和表单又是为宽屏排的 —— 两种都有用，所以给个开关。
+  bool _mobileUi = true;
 
   bool get _android =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -99,6 +114,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _web = controller;
       _failed = false;
+      _pulledToInfo = false;
       _status = '正在打开学工系统';
     });
   }
@@ -110,6 +126,16 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     if (!url.contains('stu.dgut.edu.cn')) return;
+
+    // 学工会记住上次打开的菜单，登录后常常落在某个功能页上（实测「综合测评管理」）。
+    // 那里没有身份字段，所以自己拉一次基本信息页。
+    if (!url.contains('basicInfo')) {
+      if (_pulledToInfo) return;
+      _pulledToInfo = true;
+      _set('正在打开身份信息');
+      await _web?.loadRequest(Uri.parse(_infoUrl));
+      return;
+    }
     await _scrape();
   }
 
@@ -159,6 +185,37 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.of(context).pop(true);
   }
 
+  /// 手机 / 电脑端显示切换。
+  ///
+  /// 改的是页面自己的 `viewport` —— 递归给所有 iframe 一起改，
+  /// 只改外层的话内层那张表还是按原来的宽度排。
+  Future<void> _toggleUi() async {
+    final WebViewController? web = _web;
+    if (web == null) return;
+    setState(() => _mobileUi = !_mobileUi);
+    final String content = _mobileUi
+        ? 'width=device-width,initial-scale=1,maximum-scale=3,user-scalable=yes'
+        : 'width=1280';
+    final String js =
+        "(function(){"
+        "var c='$content';"
+        "function apply(doc,depth){"
+        "if(!doc||depth>4)return;"
+        "try{var m=doc.querySelector('meta[name=viewport]');"
+        "if(!m){m=doc.createElement('meta');m.setAttribute('name','viewport');"
+        "doc.head.appendChild(m);}"
+        "m.setAttribute('content',c);}catch(e){}"
+        "try{var fs=doc.querySelectorAll('iframe,frame');"
+        "for(var i=0;i<fs.length;i++){"
+        "try{apply(fs[i].contentDocument,depth+1);}catch(e){}}}catch(e){}"
+        "}"
+        "apply(document,0);return 1;})()";
+    try {
+      await web.runJavaScript(js);
+      await web.reload();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
@@ -181,9 +238,20 @@ class _LoginPageState extends State<LoginPage> {
               onTap: () => Navigator.of(context).maybePop(),
             ),
           ),
+          // 右下角：切手机 / 电脑端显示
           Positioned(
-            left: DgutSpace.pad,
             right: DgutSpace.pad,
+            bottom: 24,
+            child: _GlassRoundButton(
+              icon: _mobileUi
+                  ? Icons.desktop_windows_outlined
+                  : Icons.smartphone_rounded,
+              onTap: _toggleUi,
+            ),
+          ),
+          Positioned(
+            left: DgutSpace.pad + 52,
+            right: DgutSpace.pad + 52,
             bottom: 24,
             child: Center(
               child: _StatusBar(
@@ -222,6 +290,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+/// 玻璃圆钮：与二级页的返回按钮、Dock 同一套材质
+/// （半透明 + 模糊 + 发丝边 + 外阴影）。
 class _GlassRoundButton extends StatelessWidget {
   const _GlassRoundButton({required this.icon, required this.onTap});
 
@@ -231,18 +301,31 @@ class _GlassRoundButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    return DgutPressable(
-      onTap: onTap,
-      pressedOpacity: 1,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: c.bg.withValues(alpha: 0.92),
-          shape: BoxShape.circle,
-          boxShadow: DgutShadows.float,
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: DgutShadows.forBrightness(Theme.of(context).brightness),
+      ),
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: c.glassDock.withValues(
+                alpha: context.isDark ? 0.46 : 0.42,
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(color: c.glassEdge, width: 1),
+            ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Center(child: Icon(icon, size: 21, color: c.ink)),
+            ),
+          ),
         ),
-        child: Icon(icon, size: 20, color: c.ink),
       ),
     );
   }
@@ -258,39 +341,49 @@ class _StatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
     final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      decoration: BoxDecoration(
-        color: c.glassDock.withValues(alpha: dark ? 0.72 : 0.82),
-        borderRadius: BorderRadius.circular(DgutRadius.full),
-        border: Border.all(color: c.glassEdge, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            text,
-            style: DgutType.caption1.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: c.ink,
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DgutRadius.full),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          decoration: BoxDecoration(
+            color: c.glassDock.withValues(alpha: dark ? 0.55 : 0.52),
+            borderRadius: BorderRadius.circular(DgutRadius.full),
+            border: Border.all(color: c.glassEdge, width: 1),
           ),
-          if (onRetry != null) ...[
-            const SizedBox(width: 10),
-            DgutPressable(
-              onTap: onRetry,
-              child: Text(
-                '重试',
-                style: DgutType.caption1.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: c.blueInk,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DgutType.caption1.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: c.ink,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ],
+              if (onRetry != null) ...[
+                const SizedBox(width: 10),
+                DgutPressable(
+                  onTap: onRetry,
+                  child: Text(
+                    '重试',
+                    style: DgutType.caption1.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: c.blueInk,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
