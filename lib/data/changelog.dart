@@ -22,9 +22,35 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.3.0';
+const String kCurrentVersion = '0.4.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.4.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '在底部 Dock 上左右拖动即可切页，松手才提交',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '底部指示胶囊跟手移动，按下即跟随手指',
+          'Dock 按压时整条轻微上浮拉伸，图标颜色随手位渐变',
+          'Dock 收窄为更紧凑的胶囊，五个入口重新分配间距',
+        ],
+      ),
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '顶栏与边缘各画一次模糊造成的两层，合并为一层',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.3.0',
     date: '2026-11-10',

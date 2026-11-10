@@ -75,15 +75,18 @@ lib/
 
 - [x] M1：theme + 组件 + 首页 + 五页外壳 + 顶栏/边缘/大标题/切页动效
 - [x] v0.2.0：PageView 左右切页 + 渐进式运动、明暗改浮层三选一、消息分段动画、版本更新历史、顶栏去底色与横线、Dock 玻璃层
+- [x] v0.3.0：应用内更新（检查 → 下载 → 唤起系统安装器）
+- [x] v0.4.0：顶栏与边缘的两层模糊合并为一层；Dock 指示胶囊跟手、按压形变、拖动切页
 - [ ] M2：课表数据层（三源导入）、课块详情 sheet
 - [ ] M3：服务页搜索与折叠的真实数据
 - [ ] M4：Android 真机验收（apk 已出，应用宝安装需手点确认）
 - [ ] iOS：需要 macOS
 - [ ] 鸿蒙：按决定另起 ArkTS/Web，不在本工程
 
-## 两个已知的技术坑（改 Dock / 顶栏前先看）
+## 三个已知的技术坑（改 Dock / 顶栏前先看）
 
-1. **Dock 的材质不能用 `BoxDecoration.gradient`**：在这个 Stack 层级里，渐变会让整层子件在 CanvasKit 下不绘制（Dock 变成一块空白）。用 `color` + 顶层高光条替代。
-2. **Dock 的材质也不要用 `BackdropFilter`**：同样会让子件消失（v0.1 时可用，改成 PageView 后失效）。顶栏的 BackdropFilter 没问题（它的 child 只有一个 Text）。
+1. **`Container(decoration: BoxDecoration(gradient: …, boxShadow: …))` 配 `clipBehavior` 会让子件在 CanvasKit 下不绘制**（Dock 变空白）。v0.4.0 改成 `ClipRRect → BackdropFilter → Container(color)`，顶部高光单独用 `DecoratedBox(gradient)` 画在 Stack 里，两条都正常。
+2. **`BackdropFilter` 不能叠**：同一屏三层以上会把 CanvasKit 卡住，滚轮完全无响应（v0.4.0 实测）。现在顶/底各最多两层（主层 + 44px 羽化带）。
+3. **`ShaderMask(BlendMode.dstIn)` 包 `BackdropFilter` 在 CanvasKit 下无效**：白色渐变会被当 `srcOver` 画出来，整块变白。要做模糊衰减只能靠分层叠加，或者上 fragment shader。
 
-这两条已记录在 `../大三上/莞工统一App方案/文档-App需求清单与实现状态-2026-11-10.md`。
+这三条已记录在 `../大三上/莞工统一App方案/文档-App需求清单与实现状态-2026-11-10.md`。

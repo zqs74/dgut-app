@@ -183,7 +183,7 @@ class _DgutShellState extends State<DgutShell> {
                   ),
                 ),
 
-                // 顶部边缘：滚过 2px 整组出现，σ 固定 20
+                // 顶部边缘：滚过 2px 开始起，18px 内渐强到满（原型的 140ms 过渡）
                 Positioned(
                   left: 0,
                   right: 0,
@@ -195,7 +195,7 @@ class _DgutShellState extends State<DgutShell> {
                       return DgutEdgeBlur(
                         atTop: true,
                         sigma: DgutMotion.edgeSigmaMax,
-                        strength: s.pixels > 2 ? 1 : 0,
+                        strength: (s.pixels / 18).clamp(0.0, 1.0),
                       );
                     },
                   ),
@@ -215,15 +215,17 @@ class _DgutShellState extends State<DgutShell> {
                   ),
                 ),
 
-                // Dock
+                // Dock：胶囊自己定宽，居中
                 Positioned(
-                  left: 16,
-                  right: 16,
+                  left: 0,
+                  right: 0,
                   bottom: 20,
-                  child: DgutDock(
-                    items: _dockItems,
-                    page: _pagePos,
-                    onSelect: _goTo,
+                  child: Center(
+                    child: DgutDock(
+                      items: _dockItems,
+                      page: _pagePos,
+                      onSelect: _goTo,
+                    ),
                   ),
                 ),
               ],
