@@ -96,7 +96,7 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
                     ),
                     DgutRow(
                       title: '教务导入',
-                      value: '强智 6',
+                      value: '强智系统',
                       onTap: () => _push(const JwxImportPage()),
                     ),
                     const DgutGroupHead(title: '学期'),

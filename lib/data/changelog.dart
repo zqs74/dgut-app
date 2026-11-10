@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.13.1';
+const String kCurrentVersion = '0.13.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.13.2',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '「我的」去掉课表设置入口，改从课表页右上角「⋯」进',
+          '外观与版本更新历史不再显示说明文字',
+          '教务导入的来源写「强智系统」，不再带版本号',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.13.1',
     date: '2026-11-10',

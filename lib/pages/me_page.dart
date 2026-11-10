@@ -193,7 +193,6 @@ class MePage extends StatelessWidget {
                   DgutGroupHead(title: '设置'),
                   DgutRow(
                     title: '外观',
-                    subtitle: '跟随系统 / 浅色 / 深色',
                     value: _themeLabel,
                     showChevron: true,
                     onTap: () async {
@@ -204,11 +203,6 @@ class MePage extends StatelessWidget {
                       if (mode != null) onThemeModeChanged(mode);
                     },
                   ),
-                  DgutRow(
-                    title: '课表设置',
-                    subtitle: '节次时间、周起始日',
-                    onTap: () {},
-                  ),
                   DgutRow(title: '通知与提醒', onTap: () {}),
                   if (UpdateService.isSupported)
                     DgutRow(
@@ -216,11 +210,7 @@ class MePage extends StatelessWidget {
                       value: 'v$kCurrentVersion',
                       onTap: () => showDgutUpdateSheet(context),
                     ),
-                  DgutRow(
-                    title: '版本更新历史',
-                    subtitle: '每次更新改了什么',
-                    onTap: onOpenChangelog,
-                  ),
+                  DgutRow(title: '版本更新历史', onTap: onOpenChangelog),
                   DgutRow(
                     title: '关于莞工 App',
                     value: 'v$kCurrentVersion',
