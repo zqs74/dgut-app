@@ -15,14 +15,22 @@ class DgutTopBar extends StatelessWidget {
     super.key,
     required this.title,
     required this.offset,
+    this.leftInset = 0,
+    this.topInset = 0,
   });
 
   final String title;
   final double offset;
 
+  /// 左侧让出的宽度（页面有返回按钮时传 56，标题才不会压在按钮上）
+  final double leftInset;
+
+  /// 状态栏高度：顶栏整体下移，标题仍贴在顶栏底部
+  final double topInset;
+
   /// 与大标题收缩同步：40 开始淡入，66 完全到位
-  static const double _riseStart = 24;
-  static const double _riseSpan = 26;
+  static const double _riseStart = 50;
+  static const double _riseSpan = 20;
 
   @override
   Widget build(BuildContext context) {
@@ -30,21 +38,23 @@ class DgutTopBar extends StatelessWidget {
     final double p =
         ((offset - _riseStart) / _riseSpan).clamp(0.0, 1.0);
 
+    if (title.isEmpty) return SizedBox(height: 96 + topInset);
+
     if (p <= 0.001) {
-      return const SizedBox(height: 96, width: double.infinity);
+      return SizedBox(height: 96 + topInset, width: double.infinity);
     }
 
     return IgnorePointer(
       child: SizedBox(
-        height: 96,
+        height: 96 + topInset,
         width: double.infinity,
         child: Opacity(
           opacity: p,
           child: Transform.translate(
             offset: Offset(0, 4 * (1 - p)),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  DgutSpace.pad, 0, DgutSpace.pad, 11),
+              padding: EdgeInsets.fromLTRB(
+                  DgutSpace.pad + leftInset, topInset, DgutSpace.pad, 11),
               child: Align(
                 alignment: Alignment.bottomLeft,
                 child: Text(

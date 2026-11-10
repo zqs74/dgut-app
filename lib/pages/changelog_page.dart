@@ -1,16 +1,14 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../components/dgut_basics.dart';
-import '../components/dgut_edge_blur.dart';
 import '../components/dgut_page_scaffold.dart';
-import '../components/dgut_topbar.dart';
-import '../theme/dgut_motion.dart';
 import '../data/changelog.dart';
 import '../theme/dgut_tokens.dart';
 
 /// 版本更新历史：时间轴，最新在上。
+///
+/// 返回按钮、顶栏模糊、小标题全部交给 `DgutPageScaffold` 的 `onBack` 统一摆位，
+/// 页面自己不再画按钮 —— 两套坐标系一叠就会撞。
 class ChangelogPage extends StatefulWidget {
   const ChangelogPage({super.key});
 
@@ -34,56 +32,26 @@ class _ChangelogPageState extends State<ChangelogPage> {
 
     return Scaffold(
       backgroundColor: c.bg,
-      body: Stack(
+      body: DgutPageScaffold(
+        eyebrow: '共 ${kChangelog.length} 个版本',
+        title: '版本更新历史',
+        offset: _offset,
+        onBack: () => Navigator.of(context).maybePop(),
+        footerHeight: 120 + MediaQuery.viewPaddingOf(context).bottom,
         children: [
-          DgutPageScaffold(
-            eyebrow: '共 ${kChangelog.length} 个版本',
-            title: '版本更新历史',
-            offset: _offset,
-            topInset: MediaQuery.paddingOf(context).top,
-            footerHeight: 120 + MediaQuery.viewPaddingOf(context).bottom,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    DgutSpace.pad, DgutSpace.s3, DgutSpace.pad, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < kChangelog.length; i++)
-                      _TimelineEntry(
-                        entry: kChangelog[i],
-                        first: i == 0,
-                        last: i == kChangelog.length - 1,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          // 顶栏：滚动后模糊浮现，标题由这里接管（与大标题缩完的位置、字号一致）
-          AnimatedBuilder(
-            animation: _offset,
-            builder: (context, _) {
-              final double px = _offset.value.pixels;
-              return IgnorePointer(
-                child: Stack(
-                  children: [
-                    DgutEdgeBlur(
-                      atTop: true,
-                      sigma: DgutMotion.edgeSigmaMax,
-                      strength: (px / 60).clamp(0.0, 1.0),
-                    ),
-                    DgutTopBar(title: '版本更新历史', offset: px),
-                  ],
-                ),
-              );
-            },
-          ),          // 返回：玻璃圆钮，避开状态栏；标题整体下移同样的量，不重叠
-          Positioned(
-            left: DgutSpace.s2,
-            top: MediaQuery.paddingOf(context).top + 8,
-            child: _GlassBackButton(
-              onTap: () => Navigator.of(context).maybePop(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                DgutSpace.pad, DgutSpace.s3, DgutSpace.pad, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < kChangelog.length; i++)
+                  _TimelineEntry(
+                    entry: kChangelog[i],
+                    first: i == 0,
+                    last: i == kChangelog.length - 1,
+                  ),
+              ],
             ),
           ),
         ],
@@ -208,48 +176,6 @@ class _TimelineEntry extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// 玻璃圆钮：与 Dock 同一套材质（半透明 + 模糊 + 发丝边 + 外阴影），
-/// 早先只是一个纯色圆，压在标题上会把字透出来。
-class _GlassBackButton extends StatelessWidget {
-  const _GlassBackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: DgutShadows.forBrightness(Theme.of(context).brightness),
-      ),
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: c.glassDock
-                  .withValues(alpha: context.isDark ? 0.46 : 0.42),
-              shape: BoxShape.circle,
-              border: Border.all(color: c.glassEdge, width: 1),
-            ),
-            child: DgutPressable(
-              onTap: onTap,
-              pressedOpacity: 0.55,
-              behavior: HitTestBehavior.opaque,
-              child: Center(
-                child: Icon(Icons.arrow_back_rounded, size: 21, color: c.ink),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

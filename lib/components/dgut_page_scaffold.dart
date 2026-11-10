@@ -1,19 +1,19 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../theme/dgut_motion.dart';
 import '../theme/dgut_tokens.dart';
+import 'dgut_edge_blur.dart';
 import 'dgut_header.dart';
 import 'dgut_reselect.dart';
+import 'dgut_topbar.dart';
 
-/// 页面骨架：可滚动内容 + 随滚动收成小标题的大标题 + 顶部 66px 留白。
+/// 页面骨架：可滚动内容 + 随滚动收成小标题的大标题。
 ///
-/// 大标题的收缩要"看得出来是收成小标题"，关键是**节奏**：
-///
-/// * 它比内容慢一点滚（translateY 补偿 45%），同时缩到 0.5（34px → 17px）；
-/// * 缩到一半就开始淡出，滚过 88px 时完全让位 —— 淡出在内容滚到它之前完成，
-///   所以不会出现"留在原地被内容压住"的残影；
-/// * 顶栏标题（`DgutTopBar`）用 62~82px 的窗口淡入，位置和字号跟这里缩完的
-///   尺寸对齐，接棒时看不出跳。
+/// 传 `onBack` 就是「二级页面模板」：返回按钮、顶栏模糊、小标题的摆位全由这里
+/// 统一负责，页面自己不要再摆一个按钮 —— 自己摆的按钮和顶栏标题用的是两套坐标，
+/// 必然会撞。左侧让位（56）同时作用在大标题、顶栏标题上，所以缩小时也是对齐的。
 class DgutPageScaffold extends StatefulWidget {
   const DgutPageScaffold({
     super.key,
@@ -25,6 +25,7 @@ class DgutPageScaffold extends StatefulWidget {
     this.showHeader = true,
     this.contentBuilder,
     this.topInset = 0,
+    this.onBack,
   });
 
   final String eyebrow;
@@ -40,6 +41,15 @@ class DgutPageScaffold extends StatefulWidget {
   /// 页面自绘导航（如返回按钮）时，把标题整体下移，避免与按钮重叠
   final double topInset;
 
+  /// 传了就按二级页面处理：自带返回按钮 + 顶栏模糊 + 小标题
+  final VoidCallback? onBack;
+
+  /// 收成小标题的滚动距离
+  static const double _morphSpan = 70;
+
+  /// 返回按钮占的横向宽度（44 按钮 + 12 间距）
+  static const double _backLane = 56;
+
   @override
   State<DgutPageScaffold> createState() => _DgutPageScaffoldState();
 }
@@ -48,9 +58,6 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
     with AutomaticKeepAliveClientMixin {
   final ScrollController _controller = ScrollController();
   DgutReselect? _reselect;
-
-  /// 收成小标题的滚动距离
-  static const double _morphSpan = 48;
 
   // PageView 会把离屏页从树上摘掉，保持存活 = 保住各自的滚动位置
   @override
@@ -103,26 +110,40 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
     super.dispose();
   }
 
+  bool get _hasBack => widget.onBack != null;
+
+  /// 有返回按钮时，状态栏那段也得算进顶栏高度
+  double get _topInset {
+    if (!_hasBack) return widget.topInset;
+    final double safe = MediaQuery.viewPaddingOf(context).top;
+    return widget.topInset > safe ? widget.topInset : safe;
+  }
+
+  double get _leading => _hasBack ? DgutPageScaffold._backLane : 0;
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // AutomaticKeepAliveClientMixin 要求
+
     Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.topInset > 0) SizedBox(height: widget.topInset),
+        if (_topInset > 0) SizedBox(height: _topInset),
         if (widget.showHeader)
           AnimatedBuilder(
             animation: widget.offset,
             builder: (context, _) {
               final double px = widget.offset.value.pixels;
-              final double t = (px / _morphSpan).clamp(0.0, 1.0);
+              final double t =
+                  (px / DgutPageScaffold._morphSpan).clamp(0.0, 1.0);
               return Transform.translate(
-                // 补偿 51%：标题比内容滚得慢，缩小过程才看得见
-                offset: Offset(0, px * 0.51),
+                // 净上移 0.614·px：滚 70px 时走完 43px，标题底部正好落到顶栏标题的基线
+                offset: Offset(0, px * 0.386),
                 child: DgutLargeHeader(
                   eyebrow: widget.eyebrow,
                   title: widget.title,
                   morph: t,
+                  leftInset: _leading,
                 ),
               );
             },
@@ -136,10 +157,94 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
       content = widget.contentBuilder!(content);
     }
 
-    return SingleChildScrollView(
+    final Widget scroller = SingleChildScrollView(
       controller: _controller,
       physics: const ClampingScrollPhysics(),
       child: content,
+    );
+
+    if (!_hasBack) return scroller;
+
+    return Stack(
+      children: [
+        Positioned.fill(child: scroller),
+        // 顶栏：模糊 + 小标题。模糊从 0 起就跟着滚上来，字出现时已经在了
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: IgnorePointer(
+            child: AnimatedBuilder(
+              animation: widget.offset,
+              builder: (context, _) {
+                final double px = widget.offset.value.pixels;
+                // 与收缩同步上涨：标题还在缩的时候别急着糊满
+                final double s = (px / 72).clamp(0.0, 1.0);
+                return Stack(
+                  children: [
+                    DgutEdgeBlur(
+                      atTop: true,
+                      sigma: DgutMotion.edgeSigmaMax,
+                      strength: s,
+                      extent: DgutEdgeBlur.topExtent + _topInset,
+                    ),
+                    DgutTopBar(
+                      title: widget.title,
+                      offset: px,
+                      leftInset: _leading,
+                      topInset: _topInset,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        Positioned(
+          left: DgutSpace.pad,
+          top: _topInset + 8,
+          child: _GlassBackButton(onTap: widget.onBack!),
+        ),
+      ],
+    );
+  }
+}
+
+/// 玻璃圆钮：与 Dock 同一套材质（半透明 + 模糊 + 发丝边 + 外阴影）
+class _GlassBackButton extends StatelessWidget {
+  const _GlassBackButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: DgutShadows.forBrightness(Theme.of(context).brightness),
+      ),
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: c.glassDock.withValues(alpha: context.isDark ? 0.46 : 0.42),
+              shape: BoxShape.circle,
+              border: Border.all(color: c.glassEdge, width: 1),
+            ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Center(
+                child: Icon(Icons.arrow_back_rounded, size: 21, color: c.ink),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

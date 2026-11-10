@@ -328,7 +328,7 @@ class _UpdateSheetState extends State<_UpdateSheet>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('已交给系统安装',
+            Text('已下载 v${_info?.version ?? ''}，请在系统弹窗点安装',
                 style: DgutType.body.copyWith(
                     color: c.ink, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),

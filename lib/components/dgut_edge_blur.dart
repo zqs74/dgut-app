@@ -21,6 +21,7 @@ class DgutEdgeBlur extends StatelessWidget {
     required this.atTop,
     required this.sigma,
     required this.strength,
+    this.extent,
   });
 
   final bool atTop;
@@ -30,6 +31,9 @@ class DgutEdgeBlur extends StatelessWidget {
 
   /// 0~1，整组的不透明度
   final double strength;
+
+  /// 覆盖默认高度（带返回按钮的页面要把状态栏那段也算进来）
+  final double? extent;
 
   /// 顶部与顶栏（.dg-topbar 96）同高，边界才落在同一条线上
   static const double topExtent = 96;
@@ -42,13 +46,13 @@ class DgutEdgeBlur extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final double extent = atTop ? topExtent : bottomExtent;
+    final double h = extent ?? (atTop ? topExtent : bottomExtent);
 
     return IgnorePointer(
       child: Opacity(
         opacity: strength.clamp(0.0, 1.0),
         child: SizedBox(
-          height: extent,
+          height: h,
           width: double.infinity,
           child: Stack(
             children: [
@@ -60,7 +64,7 @@ class DgutEdgeBlur extends StatelessWidget {
                   ),
                 ),
               ),
-              _shade(c, extent),
+              _shade(c, h),
             ],
           ),
         ),

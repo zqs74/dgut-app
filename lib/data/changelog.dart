@@ -22,9 +22,21 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.5.1';
+const String kCurrentVersion = '0.5.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.5.2',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '安装前直接标出下载到的版本号，装完能核对',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.5.1',
     date: '2026-11-10',

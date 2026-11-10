@@ -51,7 +51,8 @@ class _DgutShellState extends State<DgutShell> {
         (_) => ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero),
       );
 
-  static const List<String> _titles = ['首页', '课表', '服务', '消息', '我的'];
+  // 「我的」页没有大标题（页头是头像），顶栏也就没有可接管的标题
+  static const List<String> _titles = ['首页', '课表', '服务', '消息', ''];
 
   static const List<DgutDockItem> _dockItems = [
     DgutDockItem(label: '首页', icon: Icons.wb_sunny_outlined),
@@ -194,7 +195,7 @@ class _DgutShellState extends State<DgutShell> {
                 return DgutEdgeBlur(
                   atTop: true,
                   sigma: DgutMotion.edgeSigmaMax,
-                  strength: (s.pixels / 60).clamp(0.0, 1.0),
+                  strength: (s.pixels / 72).clamp(0.0, 1.0),
                 );
               },
             ),

@@ -18,6 +18,7 @@ class DgutLargeHeader extends StatelessWidget {
     this.subtitle,
     this.progress = 0.0,
     this.morph = 0.0,
+    this.leftInset = 0,
   });
 
   final String eyebrow;
@@ -30,6 +31,9 @@ class DgutLargeHeader extends StatelessWidget {
   /// 0 = 大标题；1 = 顶栏小标题（34 → 17px，左边缘不动，尾部淡出）
   final double morph;
 
+  /// 左侧让出的宽度（有返回按钮时传 56）
+  final double leftInset;
+
   /// 顶部内边距 + 一行眉标 + 标题（大标题行高 38）
   static const double height = 66 + 14 + 10 + 38;
 
@@ -41,8 +45,8 @@ class DgutLargeHeader extends StatelessWidget {
     final double s = (1 - 0.5 * m) * (1 - 0.26 * t);
 
     // 眉标先走，正文在后半程淡出：滚到 88px 时已完全让位给顶栏标题
-    final double fade = ((m - .30) / .60).clamp(0.0, 1.0);
-    final double eyebrowFade = ((m - .10) / .35).clamp(0.0, 1.0);
+    final double fade = ((m - .80) / .20).clamp(0.0, 1.0);
+    final double eyebrowFade = ((m - .15) / .35).clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(DgutSpace.pad, 66, DgutSpace.pad, 0),
@@ -62,7 +66,8 @@ class DgutLargeHeader extends StatelessWidget {
           Transform(
             alignment: Alignment.bottomLeft,
             transform: Matrix4.identity()
-              ..translateByDouble(0, -5 * t, 0, 1)
+              // 缩小时向右让出返回按钮的位置（大标题本身不右移，版式才不乱）
+              ..translateByDouble(leftInset * m, -5 * t, 0, 1)
               ..scaleByDouble(s, s, 1, 1),
             child: Opacity(
               opacity: (1 - fade).clamp(0.0, 1.0) * (1 - 0.92 * t).clamp(0.0, 1.0),

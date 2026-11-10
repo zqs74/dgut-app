@@ -30,6 +30,7 @@ const scrolls = String(opt("scroll", "0"))
   .map((s) => Number(s.trim()))
   .filter((n) => !Number.isNaN(n));
 const tap = opt("tap", "");
+const drag = opt("drag", "");
 const click = opt("click", "");
 const hold = Number(opt("hold", 700));
 
@@ -73,6 +74,13 @@ let seq = 0;
 const pending = new Map();
 ws.onmessage = (e) => {
   const m = JSON.parse(e.data);
+  if (m.method === 'Runtime.exceptionThrown') {
+    const d = m.params?.exceptionDetails;
+    console.log('[flutter-exception]', d?.text, d?.exception?.description || '');
+  }
+  if (m.method === 'Runtime.consoleAPICalled' && m.params?.type === 'error') {
+    console.log('[console.error]', (m.params.args || []).map(a => a.value ?? a.description ?? '').join(' '));
+  }
   if (m.id && pending.has(m.id)) {
     pending.get(m.id)(m);
     pending.delete(m.id);
@@ -159,6 +167,24 @@ if (click) {
   await sleep(1200);
 }
 
+// --drag "x,y,dy"：用触摸拖动精确滚动，比滚轮稳（滚轮的像素换算不固定）
+if (drag) {
+  const [dx0, dy0, ddy] = drag.split(",").map(Number);
+  await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 1 }, sessionId);
+  await sleep(120);
+  await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: dx0, y: dy0 }] }, sessionId);
+  const steps = 16;
+  for (let i = 1; i <= steps; i++) {
+    await send(
+      "Input.dispatchTouchEvent",
+      { type: "touchMove", touchPoints: [{ x: dx0, y: dy0 + (ddy * i) / steps }] },
+      sessionId
+    );
+    await sleep(16);
+  }
+  await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }, sessionId);
+  await sleep(800);
+}
 const png = await send("Page.captureScreenshot", { format: "png" }, sessionId);
 writeFileSync(out, Buffer.from(png.data, "base64"));
 console.log("shot:", out, `${W}x${H}`, "scroll=" + total, tap ? "tap=" + tap : "");
