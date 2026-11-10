@@ -39,8 +39,9 @@ class _DgutWeekStripState extends State<DgutWeekStrip> {
   static const double _step = 44;
 
   late final ScrollController _sc = ScrollController(
-    initialScrollOffset:
-        math.max(0, (widget.week - 1) * _step - 120).toDouble(),
+    initialScrollOffset: math
+        .max(0, (widget.week - 1) * _step - 120)
+        .toDouble(),
   );
 
   @override
@@ -83,38 +84,39 @@ class _DgutWeekStripState extends State<DgutWeekStrip> {
               onTap: () => widget.onPick(w),
               pressedOpacity: 1,
               pressedScale: 0.94,
-              child: Container(
-                width: 38,
-                height: 30,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? c.ink : c.fill,
-                  borderRadius: BorderRadius.circular(DgutRadius.full),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '$w',
-                      style: DgutType.caption1.copyWith(
-                        color: selected ? c.bg : c.ink2,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w500,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    Container(
+                      width: 38,
+                      height: 30,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected ? c.ink : c.fill,
+                        borderRadius: BorderRadius.circular(DgutRadius.full),
                       ),
-                    ),
-                    if (today)
-                      Positioned(
-                        bottom: 4,
-                        child: Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: selected ? c.bg : c.brand,
-                            shape: BoxShape.circle,
-                          ),
+                      child: Text(
+                        '$w',
+                        style: DgutType.caption1.copyWith(
+                          color: selected ? c.bg : c.ink2,
+                          height: 1.1,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 3),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: today ? c.brand : Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -185,24 +187,28 @@ class DgutTimetableGrid extends StatelessWidget {
           // 今天列淡底
           final int todayIndex = days.indexOf(today);
           if (todayIndex >= 0) {
-            overlay.add(Positioned(
-              left: DgutSpace.pad + axis + todayIndex * colW,
-              top: 0,
-              width: colW,
-              height: gridHeight,
-              child: ColoredBox(color: c.fill),
-            ));
+            overlay.add(
+              Positioned(
+                left: DgutSpace.pad + axis + todayIndex * colW,
+                top: 0,
+                width: colW,
+                height: gridHeight,
+                child: ColoredBox(color: c.fill),
+              ),
+            );
           }
 
           // 列线
           for (var i = 1; i < days.length; i++) {
-            overlay.add(Positioned(
-              left: DgutSpace.pad + axis + i * colW,
-              top: 0,
-              width: 1,
-              height: gridHeight,
-              child: ColoredBox(color: c.line),
-            ));
+            overlay.add(
+              Positioned(
+                left: DgutSpace.pad + axis + i * colW,
+                top: 0,
+                width: 1,
+                height: gridHeight,
+                child: ColoredBox(color: c.line),
+              ),
+            );
           }
 
           // 课块
@@ -216,47 +222,51 @@ class DgutTimetableGrid extends StatelessWidget {
             final double width = colW - 2;
 
             if (list.length == 1) {
-              overlay.add(Positioned(
-                left: left,
-                top: top,
-                width: width,
-                height: height,
-                child: DgutCourseBlock(
-                  placed: first,
+              overlay.add(
+                Positioned(
+                  left: left,
+                  top: top,
                   width: width,
                   height: height,
-                  onTap: () => onTap(first),
+                  child: DgutCourseBlock(
+                    placed: first,
+                    width: width,
+                    height: height,
+                    onTap: () => onTap(first),
+                  ),
                 ),
-              ));
+              );
               return;
             }
 
             const double gap = 2;
             final double each =
                 (height - gap * (list.length - 1)) / list.length;
-            overlay.add(Positioned(
-              left: left,
-              top: top,
-              width: width,
-              height: height,
-              child: Column(
-                children: [
-                  for (var i = 0; i < list.length; i++) ...[
-                    if (i > 0) const SizedBox(height: gap),
-                    SizedBox(
-                      height: each,
-                      child: DgutCourseBlock(
-                        placed: list[i],
-                        width: width,
+            overlay.add(
+              Positioned(
+                left: left,
+                top: top,
+                width: width,
+                height: height,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < list.length; i++) ...[
+                      if (i > 0) const SizedBox(height: gap),
+                      SizedBox(
                         height: each,
-                        grouped: true,
-                        onTap: () => onTap(list[i]),
+                        child: DgutCourseBlock(
+                          placed: list[i],
+                          width: width,
+                          height: each,
+                          grouped: true,
+                          onTap: () => onTap(list[i]),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ));
+            );
           });
 
           // 非本周：只填空格，不压本周的课
@@ -264,56 +274,62 @@ class DgutTimetableGrid extends StatelessWidget {
             if (groups.containsKey(p.key)) continue;
             final int dayIndex = days.indexOf(p.slot.weekday);
             if (dayIndex < 0) continue;
-            overlay.add(Positioned(
-              left: DgutSpace.pad + axis + dayIndex * colW + 1,
-              top: (p.slot.startSlot - 1) * rh + 1,
-              width: colW - 2,
-              height: p.slot.slotCount * rh - 2,
-              child: DgutCourseBlock(
-                placed: p,
+            overlay.add(
+              Positioned(
+                left: DgutSpace.pad + axis + dayIndex * colW + 1,
+                top: (p.slot.startSlot - 1) * rh + 1,
                 width: colW - 2,
                 height: p.slot.slotCount * rh - 2,
-                dormant: true,
-                onTap: () => onTap(p),
+                child: DgutCourseBlock(
+                  placed: p,
+                  width: colW - 2,
+                  height: p.slot.slotCount * rh - 2,
+                  dormant: true,
+                  onTap: () => onTap(p),
+                ),
               ),
-            ));
+            );
           }
 
           // 现在线
           final (double r, double t)? nowPos = dgutNowPosition();
           if (isCurrentWeek && todayIndex >= 0 && nowPos != null) {
             final double y = (nowPos.$1 + nowPos.$2) * rh;
-            overlay.add(Positioned(
-              left: DgutSpace.pad + axis + todayIndex * colW + 2,
-              top: y - 0.75,
-              width: colW - 4,
-              child: Container(
-                height: 1.5,
-                decoration: BoxDecoration(
-                  color: c.red,
-                  borderRadius: BorderRadius.circular(2),
+            overlay.add(
+              Positioned(
+                left: DgutSpace.pad + axis + todayIndex * colW + 2,
+                top: y - 0.75,
+                width: colW - 4,
+                child: Container(
+                  height: 1.5,
+                  decoration: BoxDecoration(
+                    color: c.red,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ));
-            overlay.add(Positioned(
-              left: DgutSpace.pad + axis + todayIndex * colW,
-              top: y - 4.5,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: c.red,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: c.red.withValues(alpha: 0.18),
-                      blurRadius: 0,
-                      spreadRadius: 3,
-                    ),
-                  ],
+            );
+            overlay.add(
+              Positioned(
+                left: DgutSpace.pad + axis + todayIndex * colW,
+                top: y - 4.5,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: c.red,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: c.red.withValues(alpha: 0.18),
+                        blurRadius: 0,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ));
+            );
           }
 
           return Column(
@@ -334,9 +350,13 @@ class DgutTimetableGrid extends StatelessWidget {
                   onLongPressStart: (LongPressStartDetails d) {
                     final double dx = d.localPosition.dx - DgutSpace.pad - axis;
                     if (dx < 0) return;
-                    final int dayIndex = (dx / colW).floor().clamp(0, days.length - 1);
+                    final int dayIndex = (dx / colW).floor().clamp(
+                      0,
+                      days.length - 1,
+                    );
                     final int slot =
-                        (d.localPosition.dy / rh).floor().clamp(0, rows - 1) + 1;
+                        (d.localPosition.dy / rh).floor().clamp(0, rows - 1) +
+                        1;
                     onAddAt(days[dayIndex], slot);
                   },
                   child: Stack(
@@ -349,10 +369,7 @@ class DgutTimetableGrid extends StatelessWidget {
                               height: rh,
                               decoration: BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(
-                                    color: c.line,
-                                    width: 1,
-                                  ),
+                                  top: BorderSide(color: c.line, width: 1),
                                 ),
                               ),
                               child: Row(
@@ -372,7 +389,7 @@ class DgutTimetableGrid extends StatelessWidget {
                                             fontWeight: FontWeight.w600,
                                             color: c.ink3,
                                             fontFeatures: const [
-                                              FontFeature.tabularFigures()
+                                              FontFeature.tabularFigures(),
                                             ],
                                           ),
                                         ),
@@ -384,7 +401,7 @@ class DgutTimetableGrid extends StatelessWidget {
                                             height: 1,
                                             color: c.ink4,
                                             fontFeatures: const [
-                                              FontFeature.tabularFigures()
+                                              FontFeature.tabularFigures(),
                                             ],
                                           ),
                                         ),
@@ -462,7 +479,9 @@ class _DayHeader extends StatelessWidget {
                       fontSize: 10.5,
                       height: 1,
                       color: d == today ? c.brandInk : c.ink4,
-                      fontWeight: d == today ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: d == today
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -501,11 +520,11 @@ class DgutCourseBlock extends StatelessWidget {
   final bool dormant;
 
   Color _bar(DgutColors c) => switch (placed.course.tone) {
-        0 => c.blue,
-        1 => c.green,
-        2 => c.violet,
-        _ => c.orange,
-      };
+    0 => c.blue,
+    1 => c.green,
+    2 => c.violet,
+    _ => c.orange,
+  };
 
   @override
   Widget build(BuildContext context) {

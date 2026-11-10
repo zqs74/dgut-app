@@ -166,13 +166,13 @@ class _CourseEditPageState extends State<CourseEditPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Field(label: '课程名', controller: _name, hint: '如 机器学习'),
-              _Field(label: '教师', controller: _teacher, hint: '可不填'),
-              _Field(label: '地点', controller: _room, hint: '如 7B-311，可不填'),
+              _Field(label: '课程名', controller: _name, hint: ''),
+              _Field(label: '教师', controller: _teacher, hint: ''),
+              _Field(label: '地点', controller: _room, hint: '7B-311'),
               _Field(
                 label: '备注',
                 controller: _note,
-                hint: '点名、水课、考试…会显示在课块第三行',
+                hint: '点名、水课',
               ),
 
               const DgutGroupHead(title: '星期'),

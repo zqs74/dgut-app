@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../components/dgut_basics.dart';
@@ -112,7 +114,8 @@ class _TimetablePageState extends State<TimetablePage> {
           children: [
             Positioned.fill(
               child: DgutPageScaffold(
-                eyebrow: '第 $week 周 · '
+                eyebrow:
+                    '第 $week 周 · '
                     '${_md(_repo.calendar.mondayOf(week))}–'
                     '${_md(_repo.calendar.dateOf(week, 7))}',
                 title: '课表',
@@ -171,10 +174,8 @@ class _TimetablePageState extends State<TimetablePage> {
                 right: 0,
                 bottom: 100,
                 child: Center(
-                  child: DgutButton(
+                  child: _GlassButton(
                     label: '回到本周',
-                    size: DgutButtonSize.sm,
-                    variant: DgutButtonVariant.gray,
                     onTap: () => _goWeek(_repo.currentWeek),
                   ),
                 ),
@@ -192,8 +193,12 @@ class _TimetablePageState extends State<TimetablePage> {
     final int slots = _repo.slotCountIn(week);
     final int clash = _repo.clashCountIn(week);
     return DgutStatLine(
-      padding:
-          const EdgeInsets.fromLTRB(DgutSpace.pad, DgutSpace.s2, DgutSpace.pad, 0),
+      padding: const EdgeInsets.fromLTRB(
+        DgutSpace.pad,
+        DgutSpace.s2,
+        DgutSpace.pad,
+        0,
+      ),
       spans: [
         dgutPlain('本周 '),
         dgutStrong(context, '$courses'),
@@ -206,6 +211,54 @@ class _TimetablePageState extends State<TimetablePage> {
           dgutPlain(' 处撞课'),
         ],
       ],
+    );
+  }
+}
+
+/// 与 Dock 同材质的浮起胶囊：同样的玻璃、发丝边和阴影。
+class _GlassButton extends StatelessWidget {
+  const _GlassButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    return DgutPressable(
+      onTap: onTap,
+      pressedOpacity: 1,
+      pressedScale: 0.95,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DgutRadius.full),
+          boxShadow: dark ? DgutShadows.floatDark : DgutShadows.float,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DgutRadius.full),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: c.glassDock.withValues(alpha: dark ? 0.55 : 0.52),
+                borderRadius: BorderRadius.circular(DgutRadius.full),
+                border: Border.all(color: c.glassEdge, width: 1),
+              ),
+              child: Text(
+                label,
+                style: DgutType.caption1.copyWith(
+                  fontSize: 13,
+                  height: 1.25,
+                  fontWeight: FontWeight.w600,
+                  color: c.ink,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -240,11 +293,7 @@ class _HeaderAction extends StatelessWidget {
             color: primary ? c.blue : c.fill,
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            size: 21,
-            color: primary ? Colors.white : c.ink2,
-          ),
+          child: Icon(icon, size: 21, color: primary ? Colors.white : c.ink2),
         ),
       ),
     );
@@ -261,7 +310,11 @@ class _EmptyState extends StatelessWidget {
     final DgutColors c = context.dg;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          DgutSpace.pad, DgutSpace.s5, DgutSpace.pad, 0),
+        DgutSpace.pad,
+        DgutSpace.s5,
+        DgutSpace.pad,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

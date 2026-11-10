@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.7.0';
+const String kCurrentVersion = '0.7.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.7.1',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '周条上今天的小圆点压住周数，改到胶囊下方',
+          '「回到本周」换成与底栏同材质的玻璃胶囊',
+          '去掉表单里解释性的占位文字',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.7.0',
     date: '2026-11-10',
