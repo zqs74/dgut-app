@@ -395,7 +395,7 @@ class DgutTimetableGrid extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          kDgutPeriods[r].start,
+                                          DgutClock.periods[r].start,
                                           style: TextStyle(
                                             fontSize: 10,
                                             height: 1,

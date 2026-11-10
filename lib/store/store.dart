@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 本机存储门面。
@@ -64,6 +65,12 @@ class Store {
   Future<void> remove(String key) async {
     final p = await _ensure();
     await p.remove('$_prefix$key');
+  }
+
+  /// 测试用：丢掉缓存的 prefs，让 setMockInitialValues 的新数据生效。
+  @visibleForTesting
+  Future<void> reload() async {
+    _prefs = await SharedPreferences.getInstance();
   }
 
   /// 清掉本应用写过的全部键（「我的 → 数据与隐私 → 清缓存」用）

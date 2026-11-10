@@ -22,9 +22,29 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.7.2';
+const String kCurrentVersion = '0.8.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.8.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '多课表：新建、切换、改名、删除，课程与学期各自独立',
+          '上课时间可以逐节改，改完课表轴和详情立刻跟着变',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '旧版单张课表自动迁进「我的课表」，数据不用重录',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.7.2',
     date: '2026-11-10',

@@ -7,6 +7,8 @@ import '../theme/dgut_tokens.dart';
 import 'course_edit_page.dart';
 import 'course_list_page.dart';
 import 'current_week_page.dart';
+import 'table_list_page.dart';
+import 'time_table_page.dart';
 
 /// 课表设置（L2）。只放"校方数据之外、学生自己要调"的东西。
 class TimetableSettingsPage extends StatefulWidget {
@@ -17,8 +19,9 @@ class TimetableSettingsPage extends StatefulWidget {
 }
 
 class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
-  final ValueNotifier<DgutScrollInfo> _offset =
-      ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero);
+  final ValueNotifier<DgutScrollInfo> _offset = ValueNotifier<DgutScrollInfo>(
+    DgutScrollInfo.zero,
+  );
 
   @override
   void dispose() {
@@ -27,9 +30,8 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
   }
 
   Future<void> _push(Widget page) async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
+    await Navigator.of(context)
+        .push<void>(MaterialPageRoute<void>(builder: (_) => page));
   }
 
   @override
@@ -59,9 +61,21 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
                   children: [
                     const DgutGroupHead(title: '课表'),
                     DgutRow(
+                      title: '我的课表',
+                      value: repo.activeName,
+                      onTap: () => _push(const TableListPage()),
+                    ),
+                    DgutRow(
                       title: '当前第几周',
                       value: '第 $week 周',
                       onTap: () => _push(const CurrentWeekPage()),
+                    ),
+                    DgutRow(
+                      title: '上课时间',
+                      value: repo.periods.isEmpty
+                          ? '—'
+                          : '${repo.periods.first.start}–${repo.periods.last.end}',
+                      onTap: () => _push(const TimeTablePage()),
                     ),
                     DgutRow(
                       title: '已添课程',
@@ -81,11 +95,6 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
                     DgutRow(
                       title: '第 1 周周一',
                       value: '${monday.year}/${monday.month}/${monday.day}',
-                      showChevron: false,
-                    ),
-                    DgutRow(
-                      title: '作息',
-                      value: '莞工作息 · 12 节',
                       showChevron: false,
                       showDivider: false,
                     ),

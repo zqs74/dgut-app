@@ -17,6 +17,8 @@ import '../pages/me_page.dart';
 import '../pages/messages_page.dart';
 import '../pages/services_page.dart';
 import '../pages/timetable_page.dart';
+import '../pages/table_list_page.dart';
+import '../pages/time_table_page.dart';
 import '../pages/timetable_settings_page.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_motion.dart';
@@ -111,6 +113,14 @@ class _DgutShellState extends State<DgutShell> {
     } else if (boot == 'settings') {
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const TimetableSettingsPage()),
+      );
+    } else if (boot == 'tables') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const TableListPage()),
+      );
+    } else if (boot == 'time') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const TimeTablePage()),
       );
     } else if (boot == 'detail') {
       final List<Course> list = TimetableRepository.instance.courses;

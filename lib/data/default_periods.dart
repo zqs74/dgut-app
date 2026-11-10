@@ -28,10 +28,24 @@ const List<DgutPeriod> kDgutPeriods = <DgutPeriod>[
   DgutPeriod('22:40', '23:25'),
 ];
 
-int get dgutPeriodCount => kDgutPeriods.length;
+/// 当前生效的作息。仓储启动时把本机存的那一套塞进来，改作息后再塞一次；
+/// 课表轴、详情页、现在线都从这里读，所以改完不用重启页面。
+class DgutClock {
+  DgutClock._();
+
+  static List<DgutPeriod> periods = kDgutPeriods;
+
+  static void set(List<DgutPeriod> next) {
+    periods = List<DgutPeriod>.unmodifiable(next);
+  }
+}
+
+int get dgutPeriodCount => DgutClock.periods.length;
 
 DgutPeriod? dgutPeriodAt(int slot) =>
-    slot >= 1 && slot <= kDgutPeriods.length ? kDgutPeriods[slot - 1] : null;
+    slot >= 1 && slot <= DgutClock.periods.length
+    ? DgutClock.periods[slot - 1]
+    : null;
 
 /// "10:25–12:05"；越界时返回空串，不让详情页因为脏数据崩
 String dgutTimeSpan(int startSlot, int slotCount) {
@@ -57,8 +71,8 @@ int dgutMinutesOf(String hhmm) {
 /// 返回 null 表示今天已经没有课（早于第 1 节或晚于最后一节）。
 (double row, double progress)? dgutNowPosition() {
   final int now = dgutNowMinutes;
-  for (var i = 0; i < kDgutPeriods.length; i++) {
-    final DgutPeriod p = kDgutPeriods[i];
+  for (var i = 0; i < DgutClock.periods.length; i++) {
+    final DgutPeriod p = DgutClock.periods[i];
     final int a = dgutMinutesOf(p.start);
     final int b = dgutMinutesOf(p.end);
     if (now >= a && now <= b) {
