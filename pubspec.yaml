@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.8.3+22
+version: 0.10.0+24
 
 environment:
   sdk: ^3.13.7
@@ -42,6 +42,7 @@ dependencies:
   # 本机存储：课表、学期日历、覆盖层、设置。
   # 四端（Android / iOS / Web / Windows）都有实现；不用 sqflite —— 它没有 Web 与 Windows 实现
   shared_preferences: ^2.3.2
+  webview_flutter: ^4.14.1
 
 dev_dependencies:
   flutter_test:

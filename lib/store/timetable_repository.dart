@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/default_periods.dart';
+import '../model/timetable_appearance.dart';
 import '../data/default_term.dart';
 import '../model/course.dart';
 import '../model/course_override.dart';
@@ -30,12 +31,14 @@ class TimetableRepository extends ChangeNotifier {
   static const String keyTables = 'tables.v2';
   static const String keyPeriods = 'periods.v1';
   static const String keyPeriodsV2 = 'periods.v2';
+  static const String keyAppearance = 'appearance.v1';
 
   final List<TimetableData> _tables = <TimetableData>[];
   String _activeId = '';
   List<DgutPeriod> _periods = kDgutPeriods;
 
   /// 固定上课时长：开了之后每节的结束时间由开始时间 + 时长推出来，只改开始时间
+  TimetableAppearance _appearance = const TimetableAppearance();
   bool _fixedDuration = true;
   int _durationMinutes = 45;
   bool _loaded = false;
@@ -49,6 +52,7 @@ class TimetableRepository extends ChangeNotifier {
   String get activeName => active.name;
   List<DgutPeriod> get periods => _periods;
   bool get fixedDuration => _fixedDuration;
+  TimetableAppearance get appearance => _appearance;
   int get durationMinutes => _durationMinutes;
 
   List<Course> get courses => List<Course>.unmodifiable(active.courses);
@@ -110,6 +114,9 @@ class TimetableRepository extends ChangeNotifier {
       }
     }
     DgutClock.set(_periods);
+    _appearance = TimetableAppearance.fromJson(
+      Store.instance.readJsonObject(keyAppearance),
+    );
 
     _loaded = true;
     notifyListeners();
@@ -190,9 +197,22 @@ class TimetableRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 删到只剩一张时不允许再删：课表不能没有
+  /// 删除课表。删的是最后一张时不清空列表，而是把这张重置成空白——
+  /// 课表不能没有，用户想要的效果（清干净）也保住了。
   Future<void> deleteTable(String id) async {
-    if (_tables.length <= 1) return;
+    if (_tables.length <= 1) {
+      final TimetableData only = _tables.firstWhere(
+        (TimetableData t) => t.id == id,
+        orElse: () => _tables.first,
+      );
+      only.courses.clear();
+      only.overrides.clear();
+      only.calendar = defaultTerm();
+      only.name = '我的课表';
+      await _persist();
+      notifyListeners();
+      return;
+    }
     _tables.removeWhere((TimetableData t) => t.id == id);
     if (_activeId == id) _activeId = _tables.first.id;
     await _persist();
@@ -268,6 +288,12 @@ class TimetableRepository extends ChangeNotifier {
       for (final DgutPeriod p in _periods)
         DgutPeriod(p.start, dgutShift(p.start, _durationMinutes)),
     ];
+  }
+
+  Future<void> setAppearance(TimetableAppearance next) async {
+    _appearance = next;
+    await Store.instance.writeJson(keyAppearance, next.toJson());
+    notifyListeners();
   }
 
   Future<void> resetPeriods() async {

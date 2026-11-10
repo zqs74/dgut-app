@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../data/default_periods.dart';
 import '../model/course.dart';
 import '../model/term_calendar.dart';
+import '../model/timetable_appearance.dart';
+import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
 import 'dgut_basics.dart';
 
@@ -519,23 +521,50 @@ class DgutCourseBlock extends StatelessWidget {
   final bool grouped;
   final bool dormant;
 
-  Color _bar(DgutColors c) => switch (placed.course.tone) {
-    0 => c.blue,
-    1 => c.green,
-    2 => c.violet,
-    _ => c.orange,
-  };
-
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    final Color bar = _bar(c);
-    final Color tint = bar.withValues(alpha: dark ? 0.20 : 0.10);
+    final TimetableAppearance a = TimetableRepository.instance.appearance;
+    final Color tone = a.colorOf(placed.course.tone);
+    final double o = a.opacity.clamp(0.05, 1.0);
+
+    Color bg;
+    Color border = Colors.transparent;
+    var dot = false;
+    var tick = false;
+    switch (a.style) {
+      case BlockStyle.paper:
+        bg = c.surface.withValues(alpha: c.surface.a * o);
+        border = c.line;
+        dot = true;
+      case BlockStyle.solid:
+        bg = tone.withValues(alpha: o);
+      case BlockStyle.outline:
+        bg = tone.withValues(alpha: 0.09 * o);
+        border = tone.withValues(alpha: 0.5);
+      case BlockStyle.tick:
+        bg = c.surface2.withValues(alpha: c.surface2.a * o);
+        border = c.line;
+        tick = true;
+    }
+
+    final bool lightText =
+        a.textColor == BlockTextColor.white ||
+        (a.textColor == BlockTextColor.tone && a.style == BlockStyle.solid);
+    final Color ink = switch (a.textColor) {
+      BlockTextColor.ink => c.ink,
+      BlockTextColor.white => Colors.white,
+      BlockTextColor.tone => lightText ? Colors.white : c.ink,
+    };
+    final Color sub = lightText ? Colors.white.withValues(alpha: 0.82) : c.ink3;
+
     final bool showNote =
         !grouped && !dormant && placed.course.note.isNotEmpty && height >= 94;
     final bool showRoom = !grouped && placed.slot.room.isNotEmpty;
-    final double nameSize = grouped ? 10.5 : 11;
+    final double nameSize =
+        (grouped ? 10.5 : (width < 52 ? 10 : 11)) * a.fontScale;
+    final FontWeight weight =
+        FontWeight.values[(a.weight ~/ 100 - 1).clamp(0, 8)];
     final String room = width < 52
         ? placed.slot.room.replaceAll('-', '')
         : placed.slot.room;
@@ -546,77 +575,99 @@ class DgutCourseBlock extends StatelessWidget {
       onLongPress: onTap,
       child: Opacity(
         opacity: dormant ? 0.42 : 1,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(DgutRadius.r1),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(5, 5, 3, 5),
-            decoration: BoxDecoration(
-              color: tint,
-              border: Border(
-                left: BorderSide(color: bar, width: dormant ? 1.5 : 2),
+        child: Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              padding: EdgeInsets.fromLTRB(tick ? 9 : 6, 5, 4, 5),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(DgutRadius.r1),
+                border: Border.all(color: border, width: 1),
               ),
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      placed.course.name,
-                      maxLines: grouped ? 1 : 2,
-                      overflow: grouped
-                          ? TextOverflow.ellipsis
-                          : TextOverflow.clip,
-                      style: TextStyle(
-                        fontSize: nameSize,
-                        height: 1.25,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                        color: c.ink,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (dot)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: tone,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                    if (showNote) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        placed.course.note,
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.2,
-                          color: c.ink2,
-                        ),
-                      ),
-                    ],
-                    if (showRoom) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        room,
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.2,
-                          color: c.ink3,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                if (dormant)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Text(
-                      '非本周',
-                      style: TextStyle(fontSize: 9, color: c.ink3, height: 1.2),
+                  Text(
+                    placed.course.name,
+                    maxLines: grouped ? 1 : (width < 52 ? 3 : 2),
+                    overflow: grouped
+                        ? TextOverflow.ellipsis
+                        : TextOverflow.clip,
+                    style: TextStyle(
+                      fontSize: nameSize,
+                      height: 1.24,
+                      fontWeight: weight,
+                      letterSpacing: -0.2,
+                      color: ink,
                     ),
                   ),
-              ],
+                  if (showNote) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      placed.course.note,
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        fontSize: 9.5 * a.fontScale,
+                        height: 1.2,
+                        color: sub,
+                      ),
+                    ),
+                  ],
+                  if (showRoom) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      room,
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        fontSize: 9.5 * a.fontScale,
+                        height: 1.2,
+                        color: sub,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                  if (dormant)
+                    Text(
+                      '非本周',
+                      style: TextStyle(fontSize: 9, height: 1.2, color: sub),
+                    ),
+                ],
+              ),
             ),
-          ),
+            if (tick)
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 3,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: tone,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(DgutRadius.r1),
+                      bottomRight: Radius.circular(3),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

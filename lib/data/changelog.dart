@@ -22,9 +22,47 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.8.3';
+const String kCurrentVersion = '0.10.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.10.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '课表外观：课块样式纸卡/实心/线框/色签',
+          '五套配色：原色、莫兰迪、深墨、明亮、单色',
+          '色块透明度、文字颜色、字号、字重都能调，改完立即生效',
+        ],
+      ),
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '教务导入的元信息（总人数/考核方式/总学时）被当成课程',
+          '同一格在页面里重复出现时会生成重复时间段',
+          '最后一张课表删不掉、菜单里没有删除项',
+        ],
+      ),
+    ],
+  ),
+
+  ChangelogEntry(
+    version: 'v0.9.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '教务导入：应用内登录莞工教务，自动读学期课表',
+          '导入前逐门勾选，与现有课程撞课会标出来',
+          '只替换「教务读取」那部分，手动录入的一条不动',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.8.3',
     date: '2026-11-10',

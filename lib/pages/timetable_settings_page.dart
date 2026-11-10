@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../components/dgut_basics.dart';
 import '../components/dgut_page_scaffold.dart';
+import '../model/timetable_appearance.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
 import 'course_edit_page.dart';
+import 'appearance_page.dart';
 import 'course_list_page.dart';
+import 'jwx_import_page.dart';
 import 'current_week_page.dart';
 import 'table_list_page.dart';
 import 'time_table_page.dart';
@@ -78,6 +81,11 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
                       onTap: () => _push(const TimeTablePage()),
                     ),
                     DgutRow(
+                      title: '课表外观',
+                      value: _styleName(repo.appearance.style),
+                      onTap: () => _push(const AppearancePage()),
+                    ),
+                    DgutRow(
                       title: '已添课程',
                       value: '${repo.courses.length} 门',
                       onTap: () => _push(const CourseListPage()),
@@ -85,6 +93,11 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
                     DgutRow(
                       title: '添加课程',
                       onTap: () => _push(const CourseEditPage()),
+                    ),
+                    DgutRow(
+                      title: '教务导入',
+                      value: '强智 6',
+                      onTap: () => _push(const JwxImportPage()),
                     ),
                     const DgutGroupHead(title: '学期'),
                     DgutRow(
@@ -108,3 +121,10 @@ class _TimetableSettingsPageState extends State<TimetableSettingsPage> {
     );
   }
 }
+
+String _styleName(BlockStyle style) => switch (style) {
+  BlockStyle.paper => '纸卡',
+  BlockStyle.solid => '实心',
+  BlockStyle.outline => '线框',
+  BlockStyle.tick => '色签',
+};

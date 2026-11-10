@@ -9,6 +9,7 @@ import '../model/course.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
 import 'course_detail_page.dart';
+import 'jwx_import_page.dart';
 import 'course_edit_page.dart';
 import 'timetable_settings_page.dart';
 
@@ -123,7 +124,14 @@ class _TimetablePageState extends State<TimetablePage> {
                 footerHeight: 240,
                 children: [
                   if (_repo.isEmpty)
-                    _EmptyState(onAdd: () => _openEdit())
+                    _EmptyState(
+                      onAdd: () => _openEdit(),
+                      onImport: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const JwxImportPage(),
+                        ),
+                      ),
+                    )
                   else ...[
                     DgutWeekStrip(
                       week: week,
@@ -301,9 +309,10 @@ class _HeaderAction extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAdd});
+  const _EmptyState({required this.onAdd, required this.onImport});
 
   final VoidCallback onAdd;
+  final VoidCallback onImport;
 
   @override
   Widget build(BuildContext context) {
@@ -320,14 +329,23 @@ class _EmptyState extends StatelessWidget {
         children: [
           Text('还没有课表', style: DgutType.title2.copyWith(color: c.ink)),
           const SizedBox(height: DgutSpace.s3),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: DgutButton(
-              label: '添加第一门课',
-              variant: DgutButtonVariant.filled,
-              icon: const Icon(Icons.add_rounded, size: 17),
-              onTap: onAdd,
-            ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              DgutButton(
+                label: '从教务导入',
+                variant: DgutButtonVariant.filled,
+                icon: const Icon(Icons.cloud_download_rounded, size: 17),
+                onTap: onImport,
+              ),
+              DgutButton(
+                label: '手动添加',
+                variant: DgutButtonVariant.gray,
+                icon: const Icon(Icons.add_rounded, size: 17),
+                onTap: onAdd,
+              ),
+            ],
           ),
         ],
       ),

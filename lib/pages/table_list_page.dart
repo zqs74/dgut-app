@@ -66,17 +66,14 @@ class _TableListPageState extends State<TableListPage> {
           DgutRow(
             title: '重命名',
             showChevron: false,
-            showDivider: _repo.tables.length > 1,
             onTap: () => Navigator.of(context).pop('rename'),
           ),
-          if (_repo.tables.length > 1)
-            DgutRow(
-              title: '删除',
-              tone: DgutRowTone.urgent,
-              showChevron: false,
-              showDivider: false,
-              onTap: () => Navigator.of(context).pop('delete'),
-            ),
+          DgutRow(
+            title: '删除',
+            showChevron: false,
+            showDivider: false,
+            onTap: () => Navigator.of(context).pop('delete'),
+          ),
         ],
       ),
     );
@@ -86,7 +83,33 @@ class _TableListPageState extends State<TableListPage> {
       final String? name = await _askName(initial: table.name, title: '重命名');
       if (name != null) await _repo.renameTable(table.id, name);
     } else if (action == 'delete') {
-      await _repo.deleteTable(table.id);
+      final bool? sure = await showDgutSheet<bool>(
+        context,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                '删除「${table.name}」',
+                style: DgutType.headline.copyWith(color: context.dg.ink),
+              ),
+            ),
+            DgutRow(
+              title: '取消',
+              showChevron: false,
+              onTap: () => Navigator.of(context).pop(false),
+            ),
+            DgutRow(
+              title: '删除',
+              showChevron: false,
+              showDivider: false,
+              onTap: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      );
+      if (sure == true) await _repo.deleteTable(table.id);
     }
   }
 
