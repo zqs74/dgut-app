@@ -38,6 +38,8 @@ class MainActivity : FlutterActivity() {
                     }
                     // 是否已授权"安装未知来源应用"
                     "canInstall" -> result.success(canInstall())
+                    // 下载目录：只有 cacheDir 在 FileProvider 的 cache-path 覆盖范围内
+                    "cacheDir" -> result.success(cacheDir.absolutePath)
                     // 直接跳到本应用的「安装未知应用」开关页
                     "openInstallPermission" -> result.success(openInstallPermission())
                     else -> result.notImplemented()
@@ -80,8 +82,19 @@ class MainActivity : FlutterActivity() {
 
     /** 把私有目录里的 apk 通过 FileProvider 交给系统安装器（用户仍需在系统弹窗点一次"安装"） */
     private fun installApk(path: String) {
-        val file = File(path)
+        var file = File(path)
         if (!file.exists()) throw IllegalStateException("安装包不存在")
+
+        // FileProvider 只认 files/ cache/ external 这几类根。落在这之外的（比如 code_cache）
+        // 会抛 "Failed to find configured root that contains ..."，先搬进 cache 再交出去。
+        val roots = listOf(cacheDir, filesDir)
+        val inside = roots.any { file.absolutePath.startsWith(it.absolutePath + File.separator) }
+        if (!inside) {
+            val moved = File(cacheDir, "dgut-update.apk")
+            file.copyTo(moved, overwrite = true)
+            file.delete()
+            file = moved
+        }
 
         val uri: Uri = FileProvider.getUriForFile(this, "$packageName.fileProvider", file)
         val intent = Intent(Intent.ACTION_VIEW).apply {

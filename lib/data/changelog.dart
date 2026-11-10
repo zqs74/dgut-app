@@ -22,9 +22,21 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.4.2';
+const String kCurrentVersion = '0.4.3';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.4.3',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '安装包改下到 cache 目录，修掉「Failed to find configured root」导致装不上',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.4.2',
     date: '2026-11-10',

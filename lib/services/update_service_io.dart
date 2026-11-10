@@ -78,9 +78,11 @@ Future<void> downloadAndInstallImpl(
     );
   }
 
-  // 应用私有 cache 目录（dart:io 自带，不依赖 path_provider）。
-  // FileProvider 的 cache-path 已覆盖这里，系统安装器能读到。
-  final Directory dir = Directory.systemTemp;
+  // 下载目录由原生给（cacheDir）。
+  // `Directory.systemTemp` 在 Android 上是 code_cache/，而 FileProvider 只声明了
+  // cache/ files/ external 几类根 —— 落在 code_cache 会直接抛
+  // "Failed to find configured root that contains ..."，装不上。
+  final Directory dir = await _downloadDir();
   final File target = File('${dir.path}/dgut-update.apk');
   if (await target.exists()) {
     await target.delete();
@@ -203,4 +205,17 @@ bool _isNewer(String remote, String local) {
     if (x != y) return x > y;
   }
   return false;
+}
+
+/// 原生 cacheDir；拿不到就退回 systemTemp（installApk 那边还会兜底搬一次）
+Future<Directory> _downloadDir() async {
+  try {
+    final String? p = await _installChannel.invokeMethod<String>('cacheDir');
+    if (p != null && p.isNotEmpty) return Directory(p);
+  } on PlatformException {
+    // 老版本原生侧没有这个方法
+  } on MissingPluginException {
+    // 非 Android
+  }
+  return Directory.systemTemp;
 }
