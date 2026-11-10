@@ -4,19 +4,17 @@ import 'package:flutter/material.dart';
 
 import '../theme/dgut_tokens.dart';
 
-/// 连续边缘模糊（.dg-edge）。
+/// 边缘模糊（.dg-edge）。
 ///
-/// 这一版把三个历史问题一并收拾掉：
+/// 只有一层，没有羽化带。曾经试过两种"让边界更软"的写法，都不留：
 ///
-/// 1. **不能有两层**。顶栏（`DgutTopBar`）曾自己画过一次 BackdropFilter，高 96；
-///    边缘高 118。两条边界对不齐，看上去就是两块玻璃叠着。现在模糊只由这里
-///    提供，主层高度与顶栏同为 96，边界就落在顶栏的底边。
-/// 2. **衰减不能靠底色**。早期拿 `bg` 60% 的渐变把模糊"冲淡"，浅色主题下那是
-///    一块 62% 的白板，比模糊本身更刺眼。现在只留 8% 的压暗，用来稳文字。
-/// 3. **BackdropFilter 不能堆**。`ShaderMask(dstIn)` 包 BackdropFilter 在
-///    CanvasKit 下 dstIn 不生效，白色渐变被当成 srcOver 画出来（顶栏直接变白）；
-///    三层叠加会让 CanvasKit 卡住输入 —— 实测 3 层时滚轮完全无响应。
-///    所以只保留「主层 + 一条 44px 羽化带」两个，边界从硬切变成两级过渡。
+/// * 主层 + 44px 羽化带：屏幕上确实还是一条分层线（上密下疏），看上去仍是两层。
+/// * `ShaderMask(dstIn)` 做遮罩：CanvasKit 下 dstIn 不生效，白色渐变被当 srcOver
+///   画出来，整块变白。
+/// * 三层叠加：CanvasKit 直接卡住输入，滚轮完全无响应。
+///
+/// 现在就一条 96px（顶部，与顶栏同高）/ 132px（底部）的模糊，加 6~8% 的压暗。
+/// 边界就是模糊的边界，一眼只有一层。
 class DgutEdgeBlur extends StatelessWidget {
   const DgutEdgeBlur({
     super.key,
@@ -33,12 +31,9 @@ class DgutEdgeBlur extends StatelessWidget {
   /// 0~1，整组的不透明度
   final double strength;
 
-  /// 主层高度：顶部与顶栏（.dg-topbar 96）同高，边界才落在同一条线上
+  /// 顶部与顶栏（.dg-topbar 96）同高，边界才落在同一条线上
   static const double topExtent = 96;
   static const double bottomExtent = 132;
-
-  /// 主层外侧的羽化带
-  static const double feather = 44;
 
   @override
   Widget build(BuildContext context) {
@@ -47,52 +42,31 @@ class DgutEdgeBlur extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final double main = atTop ? topExtent : bottomExtent;
-    final double total = main + feather;
+    final double extent = atTop ? topExtent : bottomExtent;
 
     return IgnorePointer(
       child: Opacity(
         opacity: strength.clamp(0.0, 1.0),
         child: SizedBox(
-          height: total,
+          height: extent,
           width: double.infinity,
           child: Stack(
             children: [
-              // 主层：满强度
-              Positioned(
-                left: 0,
-                right: 0,
-                top: atTop ? 0 : null,
-                bottom: atTop ? null : 0,
-                height: main,
-                child: _blur(sigma, 1.0),
+              Positioned.fill(
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
               ),
-              // 羽化带：贴着主层外侧，半径更大、强度一半，把硬切化成两级
-              Positioned(
-                left: 0,
-                right: 0,
-                top: atTop ? main : null,
-                bottom: atTop ? null : main,
-                height: feather,
-                child: _blur(sigma * 1.15, 0.66),
-              ),
-              _shade(c, total),
+              _shade(c, extent),
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _blur(double sigma, double alpha) => Opacity(
-        opacity: alpha,
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-            child: const SizedBox.expand(),
-          ),
-        ),
-      );
 
   /// 稳定文字对比度的极淡压暗（CSS .dg-edge::after 的收敛版）：只压不画边
   Widget _shade(DgutColors c, double height) {

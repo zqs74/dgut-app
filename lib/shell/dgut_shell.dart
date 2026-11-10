@@ -200,7 +200,7 @@ class _DgutShellState extends State<DgutShell> {
                         return DgutEdgeBlur(
                           atTop: true,
                           sigma: DgutMotion.edgeSigmaMax,
-                          strength: (s.pixels / 18).clamp(0.0, 1.0),
+                          strength: (s.pixels / 60).clamp(0.0, 1.0),
                         );
                       },
                     ),

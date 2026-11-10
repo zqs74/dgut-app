@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../theme/dgut_motion.dart';
 import '../theme/dgut_tokens.dart';
 
-/// 滚动浮现的顶栏（.dg-topbar）：高 96，标题底部对齐。
+/// 滚动浮现的顶栏（.dg-topbar）：高 96，标题底部对齐、左对齐。
 ///
-/// 顶栏自己**不做模糊**。顶上那层模糊由 `DgutEdgeBlur` 统一提供：
-/// 两边各画一次模糊时，边缘高度(118)与顶栏高度(96)对不齐，会看出两层。
-/// 现在顶栏只是一块透明画布 + 渐显的标题，压在连续模糊之上。
+/// 三条约定：
+/// 1. **自己不做模糊**。顶上那层模糊只由 `DgutEdgeBlur` 提供，两边各画一次
+///    会看出两层。
+/// 2. **标题左对齐、左边距 20**，和 `DgutLargeHeader` 缩到 17px 后的位置完全重合，
+///    大标题落位后交棒看不出跳变。
+/// 3. 出现窗口挪到 62~88px：早先 34px 就冒出来，会和还很大的大标题同时存在。
 class DgutTopBar extends StatelessWidget {
   const DgutTopBar({
     super.key,
@@ -18,10 +20,15 @@ class DgutTopBar extends StatelessWidget {
   final String title;
   final double offset;
 
+  /// 与大标题收缩同步：40 开始淡入，66 完全到位
+  static const double _riseStart = 24;
+  static const double _riseSpan = 26;
+
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    final double p = DgutMotion.barProgress(offset);
+    final double p =
+        ((offset - _riseStart) / _riseSpan).clamp(0.0, 1.0);
 
     if (p <= 0.001) {
       return const SizedBox(height: 96, width: double.infinity);
@@ -34,13 +41,16 @@ class DgutTopBar extends StatelessWidget {
         child: Opacity(
           opacity: p,
           child: Transform.translate(
-            offset: Offset(0, -6 * (1 - p)),
-            child: Container(
-              padding: const EdgeInsets.only(bottom: 11),
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                title,
-                style: DgutType.headline.copyWith(color: c.ink),
+            offset: Offset(0, 4 * (1 - p)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  DgutSpace.pad, 0, DgutSpace.pad, 11),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  title,
+                  style: DgutType.headline.copyWith(color: c.ink),
+                ),
               ),
             ),
           ),

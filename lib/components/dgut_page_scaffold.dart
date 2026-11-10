@@ -5,11 +5,15 @@ import '../theme/dgut_tokens.dart';
 import 'dgut_header.dart';
 import 'dgut_reselect.dart';
 
-/// 页面骨架：可滚动内容 + 随滚动收缩的大标题 + 顶部 66px 留白。
+/// 页面骨架：可滚动内容 + 随滚动收成小标题的大标题 + 顶部 66px 留白。
 ///
-/// 大标题的收缩要"看得见"，关键是**速度差**：标题比内容慢 55% 地滚出去
-/// （translateY 反向补偿），同时缩到 0.74、淡到 0.08。
-/// 只做缩放不做补偿的话，缩放会被滚动位移吃掉，看起来就是"标题直接滚没了"。
+/// 大标题的收缩要"看得出来是收成小标题"，关键是**节奏**：
+///
+/// * 它比内容慢一点滚（translateY 补偿 45%），同时缩到 0.5（34px → 17px）；
+/// * 缩到一半就开始淡出，滚过 88px 时完全让位 —— 淡出在内容滚到它之前完成，
+///   所以不会出现"留在原地被内容压住"的残影；
+/// * 顶栏标题（`DgutTopBar`）用 62~82px 的窗口淡入，位置和字号跟这里缩完的
+///   尺寸对齐，接棒时看不出跳。
 class DgutPageScaffold extends StatefulWidget {
   const DgutPageScaffold({
     super.key,
@@ -20,6 +24,7 @@ class DgutPageScaffold extends StatefulWidget {
     this.footerHeight = 180,
     this.showHeader = true,
     this.contentBuilder,
+    this.topInset = 0,
   });
 
   final String eyebrow;
@@ -32,6 +37,9 @@ class DgutPageScaffold extends StatefulWidget {
   /// 渐进式运动：外部可注入一个 Wrap，把内容按页面滑动进度做分层位移
   final Widget Function(Widget child)? contentBuilder;
 
+  /// 页面自绘导航（如返回按钮）时，把标题整体下移，避免与按钮重叠
+  final double topInset;
+
   @override
   State<DgutPageScaffold> createState() => _DgutPageScaffoldState();
 }
@@ -40,6 +48,9 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
     with AutomaticKeepAliveClientMixin {
   final ScrollController _controller = ScrollController();
   DgutReselect? _reselect;
+
+  /// 收成小标题的滚动距离
+  static const double _morphSpan = 48;
 
   // PageView 会把离屏页从树上摘掉，保持存活 = 保住各自的滚动位置
   @override
@@ -98,18 +109,20 @@ class _DgutPageScaffoldState extends State<DgutPageScaffold>
     Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.topInset > 0) SizedBox(height: widget.topInset),
         if (widget.showHeader)
           AnimatedBuilder(
             animation: widget.offset,
             builder: (context, _) {
               final double px = widget.offset.value.pixels;
+              final double t = (px / _morphSpan).clamp(0.0, 1.0);
               return Transform.translate(
-                // 反向补偿 55%：标题比内容滚得慢，收缩才看得见
-                offset: Offset(0, px * 0.55),
+                // 补偿 51%：标题比内容滚得慢，缩小过程才看得见
+                offset: Offset(0, px * 0.51),
                 child: DgutLargeHeader(
                   eyebrow: widget.eyebrow,
                   title: widget.title,
-                  progress: (px / 88).clamp(0.0, 1.0),
+                  morph: t,
                 ),
               );
             },

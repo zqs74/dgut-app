@@ -22,9 +22,29 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.4.1';
+const String kCurrentVersion = '0.4.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.4.2',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '顶栏只留一层模糊，去掉下沿那条羽化带',
+          '大标题收起时不留下半透明残影，缩到最小后交给顶栏标题',
+          '版本更新历史的返回按钮改成玻璃圆钮，不再压住页面标题',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '底部选中胶囊放大到 60×48，图标与文字之间留出间距',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.4.1',
     date: '2026-11-10',

@@ -54,7 +54,7 @@ class DgutDock extends StatefulWidget {
 class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
   static const double _inset = 8;
   static const double _height = 58;
-  static const double _iconSize = 20;
+  static const double _iconSize = 21;
 
   late final AnimationController _position = AnimationController.unbounded(
     vsync: this,
@@ -396,14 +396,14 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
 
   /// 指示胶囊：宽度固定，横坐标由连续位置算出 —— 所以它是滑过去的
   Widget _pill(DgutColors c) {
-    final double w = (widget.itemWidth - 16).clamp(44.0, 76.0);
+    final double w = (widget.itemWidth - 8).clamp(48.0, 84.0);
     final double pos = _position.value.isFinite ? _position.value : 0;
     final double x = _inset + (pos + .5) * _segmentWidth - w / 2;
     return Positioned(
       left: x,
-      top: (_height - 40) / 2,
+      top: (_height - 48) / 2,
       width: w,
-      height: 40,
+      height: 48,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: c.fillStrong,
@@ -448,7 +448,7 @@ class _DgutDockState extends State<DgutDock> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               icon,
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
                 widget.items[i].label,
                 maxLines: 1,
