@@ -200,7 +200,7 @@ class MePage extends StatelessWidget {
                   ),
                   DgutRow(title: '通知与提醒', onTap: () {}),
                   DgutRow(
-                    title: '关于莞工 App',
+                    title: '关于一莞通',
                     value: 'v$kCurrentVersion',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(builder: (_) => const AboutPage()),

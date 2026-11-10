@@ -6,7 +6,7 @@
 
     <application
         android:networkSecurityConfig="@xml/network_security_config"
-        android:label="莞工"
+        android:label="一莞通"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

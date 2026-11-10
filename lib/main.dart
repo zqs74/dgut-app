@@ -52,7 +52,7 @@ class _DgutAppState extends State<DgutApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '莞工',
+      title: '一莞通',
       debugShowCheckedModeBanner: false,
       theme: buildDgutTheme(Brightness.light),
       darkTheme: buildDgutTheme(Brightness.dark),

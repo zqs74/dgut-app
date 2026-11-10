@@ -22,9 +22,20 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.13.3';
+const String kCurrentVersion = '0.14.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.14.0',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: ['App 名字改为「一莞通」，桌面图标与窗口标题同步'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.13.3',
     date: '2026-11-11',

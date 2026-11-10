@@ -37,7 +37,7 @@ class _AboutPageState extends State<AboutPage> {
     return Scaffold(
       backgroundColor: c.bg,
       body: DgutPageScaffold(
-        eyebrow: '莞工统一 App',
+        eyebrow: '一莞通',
         title: '关于',
         offset: _offset,
         onBack: () => Navigator.of(context).maybePop(),
