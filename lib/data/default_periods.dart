@@ -1,4 +1,4 @@
-/// 莞工作息表。
+/// 莞工作息表（11 节，实测自 WakeUp 里本校的作息：08:30 起、上午 4 节、下午 4 节、晚上 3 节）。
 ///
 /// 来源：2026-11-10 用户手机上的课表截图（第 1 节 08:30–09:15，上午四节、
 /// 下午 14:30 起三节、晚上 19:00 起）。**只做莞工，不引入多套作息**；
@@ -17,15 +17,14 @@ const List<DgutPeriod> kDgutPeriods = <DgutPeriod>[
   DgutPeriod('08:30', '09:15'),
   DgutPeriod('09:25', '10:10'),
   DgutPeriod('10:25', '11:10'),
-  DgutPeriod('11:20', '12:05'),
+  DgutPeriod('11:15', '12:00'),
   DgutPeriod('14:30', '15:15'),
   DgutPeriod('15:25', '16:10'),
-  DgutPeriod('16:20', '17:05'),
-  DgutPeriod('19:00', '19:45'),
-  DgutPeriod('19:55', '20:40'),
-  DgutPeriod('20:50', '21:35'),
-  DgutPeriod('21:45', '22:30'),
-  DgutPeriod('22:40', '23:25'),
+  DgutPeriod('16:25', '17:10'),
+  DgutPeriod('17:20', '18:05'),
+  DgutPeriod('19:30', '20:15'),
+  DgutPeriod('20:25', '21:10'),
+  DgutPeriod('21:15', '22:00'),
 ];
 
 /// 当前生效的作息。仓储启动时把本机存的那一套塞进来，改作息后再塞一次；
@@ -61,6 +60,17 @@ int get dgutNowMinutes {
   return now.hour * 60 + now.minute;
 }
 
+/// 分钟数 → "08:30"，跨日自动回绕
+String dgutFormatMinutes(int minutes) {
+  final int m = ((minutes % 1440) + 1440) % 1440;
+  final String h = (m ~/ 60).toString().padLeft(2, '0');
+  final String mm = (m % 60).toString().padLeft(2, '0');
+  return '$h:$mm';
+}
+
+/// "08:30" 往后挪 N 分钟
+String dgutShift(String hhmm, int deltaMinutes) =>
+    dgutFormatMinutes(dgutMinutesOf(hhmm) + deltaMinutes);
 int dgutMinutesOf(String hhmm) {
   final List<String> p = hhmm.split(':');
   if (p.length != 2) return 0;

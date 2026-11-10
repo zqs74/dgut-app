@@ -52,6 +52,23 @@ void main() {
     expect(repo.tables.length, 1);
   });
 
+  test('固定时长开启后，结束时间由开始时间推出', () async {
+    await _boot(<String, Object>{});
+    final TimetableRepository repo = TimetableRepository.instance;
+    await repo.setDuration(40);
+    await repo.setFixedDuration(true);
+    expect(repo.periods.first.end, dgutShift(repo.periods.first.start, 40));
+  });
+
+  test('节数可以增减，加出来的节接在末尾', () async {
+    await _boot(<String, Object>{});
+    final TimetableRepository repo = TimetableRepository.instance;
+    await repo.setPeriodCount(13);
+    expect(repo.periods.length, 13);
+    expect(repo.periods.last.start.compareTo(repo.periods[11].end), greaterThan(0));
+    await repo.setPeriodCount(5);
+    expect(repo.periods.length, 5);
+  });
   test('改作息同时更新 DgutClock，重载后还在', () async {
     await _boot(<String, Object>{});
     final TimetableRepository repo = TimetableRepository.instance;

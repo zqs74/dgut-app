@@ -22,9 +22,30 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.8.0';
+const String kCurrentVersion = '0.8.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.8.1',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '上课时间按 WakeUp 的门路重做：固定时长开关、每节时长、节数可增减',
+          '默认作息改成本校 11 节（08:30–22:00），每行带箭头提示可点',
+        ],
+      ),
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '我的课表右侧「⋯」太小，改成一整颗圆钮',
+          '已添课程与搜索框之间补足间距',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.8.0',
     date: '2026-11-10',

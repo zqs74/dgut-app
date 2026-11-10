@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../components/dgut_basics.dart';
 import '../components/dgut_page_scaffold.dart';
+import '../data/default_periods.dart';
 import '../model/course.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
@@ -228,7 +229,7 @@ class _CourseEditPageState extends State<CourseEditPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (var s = 1; s <= 12; s++)
+                        for (var s = 1; s <= dgutPeriodCount; s++)
                           _Pill(
                             label: '$s',
                             selected: _startSlot == s,

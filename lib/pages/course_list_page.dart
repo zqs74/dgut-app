@@ -82,12 +82,13 @@ class _CourseListPageState extends State<CourseListPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const SizedBox(height: DgutSpace.s3),
                     DgutSearchField(
                       hint: '搜课程、老师或教室',
                       controller: _query,
                       onChanged: (String v) => setState(() => _q = v.trim()),
                     ),
-                    const SizedBox(height: DgutSpace.s2),
+                    const SizedBox(height: DgutSpace.s3),
                     if (list.isEmpty)
                       Text('没有匹配的课程。',
                           style: DgutType.body.copyWith(color: c.ink3))

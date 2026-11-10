@@ -29,10 +29,15 @@ class TimetableRepository extends ChangeNotifier {
 
   static const String keyTables = 'tables.v2';
   static const String keyPeriods = 'periods.v1';
+  static const String keyPeriodsV2 = 'periods.v2';
 
   final List<TimetableData> _tables = <TimetableData>[];
   String _activeId = '';
   List<DgutPeriod> _periods = kDgutPeriods;
+
+  /// 固定上课时长：开了之后每节的结束时间由开始时间 + 时长推出来，只改开始时间
+  bool _fixedDuration = true;
+  int _durationMinutes = 45;
   bool _loaded = false;
 
   List<TimetableData> get tables => List<TimetableData>.unmodifiable(_tables);
@@ -43,6 +48,8 @@ class TimetableRepository extends ChangeNotifier {
   );
   String get activeName => active.name;
   List<DgutPeriod> get periods => _periods;
+  bool get fixedDuration => _fixedDuration;
+  int get durationMinutes => _durationMinutes;
 
   List<Course> get courses => List<Course>.unmodifiable(active.courses);
   TermCalendar get calendar => active.calendar;
@@ -76,15 +83,31 @@ class TimetableRepository extends ChangeNotifier {
       _activeId = _tables.first.id;
     }
 
-    final List<dynamic>? rawPeriods = Store.instance.readJsonList(keyPeriods);
-    if (rawPeriods != null && rawPeriods.length == kDgutPeriods.length) {
+    final Map<String, dynamic>? pv2 = Store.instance.readJsonObject(
+      keyPeriodsV2,
+    );
+    if (pv2 != null) {
       final List<DgutPeriod> parsed = <DgutPeriod>[];
-      for (final Object? item in rawPeriods) {
+      for (final Object? item in (pv2['list'] as List?) ?? const []) {
         if (item is List && item.length == 2) {
           parsed.add(DgutPeriod('${item[0]}', '${item[1]}'));
         }
       }
-      if (parsed.length == kDgutPeriods.length) _periods = parsed;
+      if (parsed.isNotEmpty) _periods = parsed;
+      _fixedDuration = (pv2['fixed'] as bool?) ?? true;
+      _durationMinutes = (pv2['duration'] as num?)?.toInt() ?? 45;
+    } else {
+      // 旧版只存了 12 行时间：读进来当作用户自己排过的表
+      final List<dynamic>? legacy = Store.instance.readJsonList(keyPeriods);
+      if (legacy != null) {
+        final List<DgutPeriod> parsed = <DgutPeriod>[];
+        for (final Object? item in legacy) {
+          if (item is List && item.length == 2) {
+            parsed.add(DgutPeriod('${item[0]}', '${item[1]}'));
+          }
+        }
+        if (parsed.isNotEmpty) _periods = parsed;
+      }
     }
     DgutClock.set(_periods);
 
@@ -187,16 +210,74 @@ class TimetableRepository extends ChangeNotifier {
 
   // ---- 作息 ----
 
+  Future<void> _persistPeriods() =>
+      Store.instance.writeJson(keyPeriodsV2, <String, Object?>{
+        'fixed': _fixedDuration,
+        'duration': _durationMinutes,
+        'list': <List<String>>[
+          for (final DgutPeriod p in _periods) <String>[p.start, p.end],
+        ],
+      });
+
   Future<void> setPeriods(List<DgutPeriod> next) async {
     _periods = List<DgutPeriod>.of(next);
     DgutClock.set(_periods);
-    await Store.instance.writeJson(keyPeriods, <List<String>>[
-      for (final DgutPeriod p in _periods) <String>[p.start, p.end],
-    ]);
+    await _persistPeriods();
     notifyListeners();
   }
 
-  Future<void> resetPeriods() => setPeriods(kDgutPeriods);
+  /// 开了固定时长之后，每节的结束时间统一由开始时间 + 时长推出来
+  Future<void> setFixedDuration(bool value) async {
+    _fixedDuration = value;
+    if (value) _applyDuration();
+    DgutClock.set(_periods);
+    await _persistPeriods();
+    notifyListeners();
+  }
+
+  Future<void> setDuration(int minutes) async {
+    _durationMinutes = minutes.clamp(20, 180);
+    if (_fixedDuration) _applyDuration();
+    DgutClock.set(_periods);
+    await _persistPeriods();
+    notifyListeners();
+  }
+
+  /// 节数增减：加的时候接着最后一节的结束时间排，减的时候从末尾删
+  Future<void> setPeriodCount(int count) async {
+    final int target = count.clamp(1, 16);
+    if (target == _periods.length) return;
+    final List<DgutPeriod> next = List<DgutPeriod>.of(_periods);
+    while (next.length > target) {
+      next.removeLast();
+    }
+    while (next.length < target) {
+      final String start = next.isEmpty
+          ? '08:30'
+          : dgutShift(next.last.end, 10);
+      next.add(DgutPeriod(start, dgutShift(start, _durationMinutes)));
+    }
+    _periods = next;
+    DgutClock.set(_periods);
+    await _persistPeriods();
+    notifyListeners();
+  }
+
+  void _applyDuration() {
+    _periods = <DgutPeriod>[
+      for (final DgutPeriod p in _periods)
+        DgutPeriod(p.start, dgutShift(p.start, _durationMinutes)),
+    ];
+  }
+
+  Future<void> resetPeriods() async {
+    _periods = kDgutPeriods;
+    _fixedDuration = true;
+    _durationMinutes = 45;
+    DgutClock.set(_periods);
+    await _persistPeriods();
+    notifyListeners();
+  }
 
   // ---- 课程 ----
 

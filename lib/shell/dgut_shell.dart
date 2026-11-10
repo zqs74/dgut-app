@@ -12,6 +12,7 @@ import '../model/course.dart';
 import '../pages/changelog_page.dart';
 import '../pages/course_detail_page.dart';
 import '../pages/course_edit_page.dart';
+import '../pages/course_list_page.dart';
 import '../pages/home_page.dart';
 import '../pages/me_page.dart';
 import '../pages/messages_page.dart';
@@ -117,6 +118,10 @@ class _DgutShellState extends State<DgutShell> {
     } else if (boot == 'tables') {
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const TableListPage()),
+      );
+    } else if (boot == 'courses') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const CourseListPage()),
       );
     } else if (boot == 'time') {
       Navigator.of(context).push(

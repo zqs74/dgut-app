@@ -6,7 +6,7 @@ import '../data/default_periods.dart';
 import '../store/timetable_repository.dart';
 import '../theme/dgut_tokens.dart';
 
-/// 上课时间（L3）：12 节的起止时间，改完立即反映到课表轴与详情。
+/// 上课时间（L3）：固定时长、每节时长、节数、每节开始时间。
 class TimeTablePage extends StatefulWidget {
   const TimeTablePage({super.key});
 
@@ -38,7 +38,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
   static String _format(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-  Future<void> _edit(int index) async {
+  Future<void> _editPeriod(int index) async {
     final List<DgutPeriod> list = <DgutPeriod>[..._repo.periods];
     final DgutPeriod current = list[index];
 
@@ -49,12 +49,20 @@ class _TimeTablePageState extends State<TimeTablePage> {
     );
     if (start == null || !mounted) return;
 
-    final TimeOfDay? end = await showTimePicker(
-      context: context,
-      initialTime: _parse(current.end),
-      helpText: '第 ${index + 1} 节 结束',
-    );
-    if (end == null) return;
+    TimeOfDay end;
+    if (_repo.fixedDuration) {
+      final int minutes =
+          start.hour * 60 + start.minute + _repo.durationMinutes;
+      end = TimeOfDay(hour: (minutes ~/ 60) % 24, minute: minutes % 60);
+    } else {
+      final TimeOfDay? picked = await showTimePicker(
+        context: context,
+        initialTime: _parse(current.end),
+        helpText: '第 ${index + 1} 节 结束',
+      );
+      if (picked == null) return;
+      end = picked;
+    }
 
     final int startMinutes = start.hour * 60 + start.minute;
     final int endMinutes = end.hour * 60 + end.minute;
@@ -62,6 +70,29 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
     list[index] = DgutPeriod(_format(start), _format(end));
     await _repo.setPeriods(list);
+  }
+
+  Future<void> _pickDuration() async {
+    final int? picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: context.dg.bg,
+      builder: (BuildContext ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final int m in <int>[35, 40, 45, 50, 55, 60])
+              DgutRow(
+                title: '$m 分钟',
+                value: m == _repo.durationMinutes ? '当前' : null,
+                showChevron: false,
+                showDivider: m != 60,
+                onTap: () => Navigator.of(ctx).pop(m),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) await _repo.setDuration(picked);
   }
 
   @override
@@ -72,9 +103,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
       listenable: _repo,
       builder: (BuildContext context, Widget? _) {
         final List<DgutPeriod> periods = _repo.periods;
-        final String span = periods.isEmpty
-            ? ''
-            : '${periods.first.start}–${periods.last.end}';
 
         return Scaffold(
           backgroundColor: c.bg,
@@ -88,25 +116,58 @@ class _TimeTablePageState extends State<TimeTablePage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   DgutSpace.pad,
-                  DgutSpace.s1,
+                  DgutSpace.s3,
                   DgutSpace.pad,
                   0,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      span,
-                      style: DgutType.caption1.copyWith(color: c.ink3),
+                    DgutRow(
+                      title: '固定上课时长',
+                      showChevron: false,
+                      trailing: DgutSwitch(
+                        value: _repo.fixedDuration,
+                        onChanged: _repo.setFixedDuration,
+                      ),
+                      onTap: () => _repo.setFixedDuration(!_repo.fixedDuration),
                     ),
-                    const SizedBox(height: DgutSpace.s2),
+                    DgutRow(
+                      title: '每节课时长',
+                      value: '${_repo.durationMinutes} 分钟',
+                      onTap: _pickDuration,
+                    ),
+                    DgutRow(
+                      title: '节数',
+                      value: '${periods.length} 节',
+                      showChevron: false,
+                      showDivider: false,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _StepButton(
+                            icon: Icons.remove_rounded,
+                            onTap: periods.length > 1
+                                ? () => _repo.setPeriodCount(periods.length - 1)
+                                : null,
+                          ),
+                          const SizedBox(width: 10),
+                          _StepButton(
+                            icon: Icons.add_rounded,
+                            onTap: periods.length < 16
+                                ? () => _repo.setPeriodCount(periods.length + 1)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: DgutSpace.s3),
                     for (var i = 0; i < periods.length; i++)
                       DgutRow(
                         title: '第 ${i + 1} 节',
                         value: '${periods[i].start}–${periods[i].end}',
-                        showChevron: false,
                         showDivider: i < periods.length - 1,
-                        onTap: () => _edit(i),
+                        onTap: () => _editPeriod(i),
                       ),
                     const SizedBox(height: DgutSpace.s3),
                     Align(
@@ -125,6 +186,30 @@ class _TimeTablePageState extends State<TimeTablePage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({required this.icon, this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    final bool enabled = onTap != null;
+    return DgutPressable(
+      onTap: onTap,
+      pressedOpacity: 1,
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: c.fill, shape: BoxShape.circle),
+        child: Icon(icon, size: 18, color: enabled ? c.ink2 : c.ink4),
+      ),
     );
   }
 }

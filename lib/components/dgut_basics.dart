@@ -118,18 +118,11 @@ class DgutRow extends StatelessWidget {
     };
 
     final Widget body = Padding(
-      padding: EdgeInsets.only(
-        top: 14,
-        bottom: 14,
-        left: bar != null ? 12 : 0,
-      ),
+      padding: EdgeInsets.only(top: 14, bottom: 14, left: bar != null ? 12 : 0),
       child: Row(
         children: [
           if (leading != null) ...[
-            SizedBox(
-              width: 22,
-              child: Center(child: leading),
-            ),
+            SizedBox(width: 22, child: Center(child: leading)),
             const SizedBox(width: 14),
           ],
           Expanded(
@@ -139,8 +132,7 @@ class DgutRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: DgutType.body
-                      .copyWith(color: c.ink, height: 1.35),
+                  style: DgutType.body.copyWith(color: c.ink, height: 1.35),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -149,8 +141,10 @@ class DgutRow extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 3),
                     child: Text(
                       subtitle!,
-                      style: DgutType.footnote
-                          .copyWith(color: c.ink3, height: 1.4),
+                      style: DgutType.footnote.copyWith(
+                        color: c.ink3,
+                        height: 1.4,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -160,15 +154,9 @@ class DgutRow extends StatelessWidget {
           ),
           if (value != null) ...[
             const SizedBox(width: 12),
-            Text(
-              value!,
-              style: DgutType.callout.copyWith(color: c.ink3),
-            ),
+            Text(value!, style: DgutType.callout.copyWith(color: c.ink3)),
           ],
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
           if (showChevron) ...[
             const SizedBox(width: 8),
             Icon(Icons.chevron_right_rounded, size: 20, color: c.ink3),
@@ -199,11 +187,7 @@ class DgutRow extends StatelessWidget {
       );
     }
 
-    return DgutPressable(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: row,
-    );
+    return DgutPressable(onTap: onTap, onLongPress: onLongPress, child: row);
   }
 }
 
@@ -259,7 +243,8 @@ class DgutButton extends StatelessWidget {
         height: h,
         width: block ? double.infinity : null,
         padding: EdgeInsets.symmetric(
-            horizontal: variant == DgutButtonVariant.plain ? 6 : pad),
+          horizontal: variant == DgutButtonVariant.plain ? 6 : pad,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(DgutRadius.full),
@@ -320,7 +305,11 @@ class DgutChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w500, color: fg, height: 1.1),
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: fg,
+          height: 1.1,
+        ),
       ),
     );
   }
@@ -359,10 +348,11 @@ class DgutGroupHead extends StatelessWidget {
                 child: Text(
                   action!,
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: c.blueInk,
-                      height: 1.2),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: c.blueInk,
+                    height: 1.2,
+                  ),
                 ),
               ),
             ),
@@ -384,9 +374,12 @@ class DgutStatLine extends StatelessWidget {
     final DgutColors c = context.dg;
     final TextStyle base = DgutType.footnote.copyWith(color: c.ink3);
     return Padding(
-      padding: padding ??
+      padding:
+          padding ??
           const EdgeInsets.symmetric(
-              horizontal: DgutSpace.pad, vertical: DgutSpace.s2),
+            horizontal: DgutSpace.pad,
+            vertical: DgutSpace.s2,
+          ),
       child: RichText(
         text: TextSpan(style: base, children: spans),
       ),
@@ -396,10 +389,9 @@ class DgutStatLine extends StatelessWidget {
 
 /// 行内加粗（配 DgutStatLine 用）
 InlineSpan dgutStrong(BuildContext context, String text) => TextSpan(
-      text: text,
-      style: TextStyle(
-          color: context.dg.ink, fontWeight: FontWeight.w600),
-    );
+  text: text,
+  style: TextStyle(color: context.dg.ink, fontWeight: FontWeight.w600),
+);
 
 InlineSpan dgutPlain(String text) => TextSpan(text: text);
 
@@ -488,20 +480,29 @@ class _DgutDisclosureState extends State<DgutDisclosure> {
               padding: const EdgeInsets.symmetric(vertical: 15),
               child: Row(
                 children: [
-                  Text(widget.title,
-                      style: DgutType.body.copyWith(
-                          color: c.ink, fontWeight: FontWeight.w600)),
+                  Text(
+                    widget.title,
+                    style: DgutType.body.copyWith(
+                      color: c.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   const Spacer(),
-                  Text(widget.count,
-                      style: DgutType.footnote.copyWith(color: c.ink3)),
+                  Text(
+                    widget.count,
+                    style: DgutType.footnote.copyWith(color: c.ink3),
+                  ),
                   const SizedBox(width: 10),
                   AnimatedRotation(
                     turns: _open ? 0.25 : 0,
                     duration: DgutMotion.exit,
                     curve: DgutMotion.settle,
-                    child: Icon(Icons.chevron_right_rounded,
-                        size: 20, color: c.ink3),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: c.ink3,
+                    ),
                   ),
                 ],
               ),
@@ -550,9 +551,13 @@ class DgutMeter extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(name,
-                  style: DgutType.footnote
-                      .copyWith(color: c.ink2, fontWeight: FontWeight.w500)),
+              Text(
+                name,
+                style: DgutType.footnote.copyWith(
+                  color: c.ink2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const Spacer(),
               Text(value, style: DgutType.caption1.copyWith(color: c.ink3)),
             ],
@@ -631,8 +636,7 @@ class DgutLegend extends StatelessWidget {
       padding: padding ?? EdgeInsets.zero,
       child: Text(
         text,
-        style: DgutType.caption1
-            .copyWith(color: context.dg.ink3, height: 1.65),
+        style: DgutType.caption1.copyWith(color: context.dg.ink3, height: 1.65),
       ),
     );
   }
@@ -647,7 +651,11 @@ class DgutHero extends StatelessWidget {
     this.meta,
     this.foot,
     this.padding = const EdgeInsets.fromLTRB(
-        DgutSpace.pad, DgutSpace.s4, DgutSpace.pad, DgutSpace.s3),
+      DgutSpace.pad,
+      DgutSpace.s4,
+      DgutSpace.pad,
+      DgutSpace.s3,
+    ),
   });
 
   final String label;
@@ -670,29 +678,38 @@ class DgutHero extends StatelessWidget {
                 width: 6,
                 height: 6,
                 decoration: BoxDecoration(
-                    color: c.brand, shape: BoxShape.circle),
+                  color: c.brand,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   label,
                   style: DgutType.caption2.copyWith(
-                      color: c.brandInk,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.12 * 11),
+                    color: c.brandInk,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.12 * 11,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(value,
-              style:
-                  DgutType.title1.copyWith(color: c.ink, fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: DgutType.title1.copyWith(
+              color: c.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           if (meta != null)
             Padding(
               padding: const EdgeInsets.only(top: 10),
-              child: Text(meta!,
-                  style: DgutType.callout.copyWith(color: c.ink2)),
+              child: Text(
+                meta!,
+                style: DgutType.callout.copyWith(color: c.ink2),
+              ),
             ),
           if (foot != null)
             Container(
@@ -704,6 +721,50 @@ class DgutHero extends StatelessWidget {
               child: foot,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 开关：50×30 胶囊，开时 brand 底白钮，关时浅灰底。
+class DgutSwitch extends StatelessWidget {
+  const DgutSwitch({super.key, required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    return DgutPressable(
+      onTap: () => onChanged(!value),
+      pressedOpacity: 1,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        width: 50,
+        height: 30,
+        padding: const EdgeInsets.all(3),
+        alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: value ? c.blue : c.line,
+          borderRadius: BorderRadius.circular(DgutRadius.full),
+        ),
+        child: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

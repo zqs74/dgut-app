@@ -128,13 +128,23 @@ class _TableListPageState extends State<TableListPage> {
                                 size: 18,
                                 color: c.blue,
                               ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 4),
                             DgutPressable(
                               onTap: () => _menu(table),
-                              child: Icon(
-                                Icons.more_horiz_rounded,
-                                size: 18,
-                                color: c.ink3,
+                              pressedOpacity: 0.7,
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: c.fill,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.more_horiz_rounded,
+                                  size: 20,
+                                  color: c.ink2,
+                                ),
                               ),
                             ),
                           ],
