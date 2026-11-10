@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../components/dgut_dock.dart';
 import '../components/dgut_edge_blur.dart';
+import '../components/dgut_rail.dart';
 import '../components/dgut_reselect.dart';
 import '../components/dgut_theme_sheet.dart';
 import '../components/dgut_topbar.dart';
@@ -15,6 +16,7 @@ import '../pages/services_page.dart';
 import '../pages/timetable_page.dart';
 import '../theme/dgut_motion.dart';
 import '../theme/dgut_tokens.dart';
+import '../theme/dgut_window.dart';
 
 /// 五页外壳：PageView 横向切页 + 顶栏 + 上下边缘 + Dock。
 ///
@@ -125,6 +127,9 @@ class _DgutShellState extends State<DgutShell> {
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
+    final DgutWindowClass wc = DgutWindow.of(context);
+    final bool rail = DgutWindow.usesRail(wc);
+    final double bottomSafe = DgutWindow.bottomSafe(context);
 
     final List<Widget> pages = [
       HomePage(offset: _scroll[0]),
@@ -141,104 +146,129 @@ class _DgutShellState extends State<DgutShell> {
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: c.bgDeep,
-      body: Center(
-        child: ConstrainedBox(
-          // 手机优先：桌面 / 平板窗口里把内容收到手机宽度并居中
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: SizedBox.expand(
-            child: DgutReselectScope(
-              notifier: _reselect,
-              child: Stack(
-                children: [
-                  // 背景固定不动 —— 它是"渐进运动"里最慢的一层
-                  const Positioned.fill(child: _AmbientBg()),
+    // 页面舞台：PageView + 上下边缘 + 顶栏（+ Dock）。宽屏时整体限宽居中。
+    Widget stage() => DgutReselectScope(
+      notifier: _reselect,
+      child: Stack(
+        children: [
+          // 页面：PageView 横向切页
+          PageView.builder(
+            controller: _pc,
+            itemCount: pages.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (context, i) => _ProgressivePage(
+              page: _pagePos,
+              index: i,
+              child: pages[i],
+            ),
+          ),
 
-                  // 页面：PageView 横向切页
-                  PageView.builder(
-                    controller: _pc,
-                    itemCount: pages.length,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    itemBuilder: (context, i) => _ProgressivePage(
-                      page: _pagePos,
-                      index: i,
-                      child: pages[i],
-                    ),
-                  ),
+          // 底部边缘（在 Dock 之下）
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AnimatedBuilder(
+              animation: _active,
+              builder: (context, _) {
+                final DgutScrollInfo s = _active.value;
+                final double depth = DgutMotion.edgeDepth(s.rest);
+                return DgutEdgeBlur(
+                  atTop: false,
+                  sigma: DgutMotion.edgeSigma(depth),
+                  strength: s.max <= 10 ? 0 : DgutMotion.edgeStrength(depth),
+                );
+              },
+            ),
+          ),
 
-                  // 底部边缘（在 Dock 之下）
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: AnimatedBuilder(
-                      animation: _active,
-                      builder: (context, _) {
-                        final DgutScrollInfo s = _active.value;
-                        final double depth = DgutMotion.edgeDepth(s.rest);
-                        return DgutEdgeBlur(
-                          atTop: false,
-                          sigma: DgutMotion.edgeSigma(depth),
-                          strength: s.max <= 10
-                              ? 0
-                              : DgutMotion.edgeStrength(depth),
-                        );
-                      },
-                    ),
-                  ),
+          // 顶部边缘：滚过 2px 开始起，60px 内渐强到满
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: AnimatedBuilder(
+              animation: _active,
+              builder: (context, _) {
+                final DgutScrollInfo s = _active.value;
+                return DgutEdgeBlur(
+                  atTop: true,
+                  sigma: DgutMotion.edgeSigmaMax,
+                  strength: (s.pixels / 60).clamp(0.0, 1.0),
+                );
+              },
+            ),
+          ),
 
-                  // 顶部边缘：滚过 2px 开始起，18px 内渐强到满（原型的 140ms 过渡）
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: AnimatedBuilder(
-                      animation: _active,
-                      builder: (context, _) {
-                        final DgutScrollInfo s = _active.value;
-                        return DgutEdgeBlur(
-                          atTop: true,
-                          sigma: DgutMotion.edgeSigmaMax,
-                          strength: (s.pixels / 60).clamp(0.0, 1.0),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // 顶栏
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: AnimatedBuilder(
-                      animation: _active,
-                      builder: (context, _) => DgutTopBar(
-                        title: _titles[_index],
-                        offset: _active.value.pixels,
-                      ),
-                    ),
-                  ),
-
-                  // Dock：胶囊自己定宽，居中
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 20,
-                    child: Center(
-                      child: DgutDock(
-                        items: _dockItems,
-                        page: _pagePos,
-                        onSelect: _goTo,
-                        onReselect: (_) => _reselect.fire(_scroll[_index]),
-                      ),
-                    ),
-                  ),
-                ],
+          // 顶栏标题
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: AnimatedBuilder(
+              animation: _active,
+              builder: (context, _) => DgutTopBar(
+                title: _titles[_index],
+                offset: _active.value.pixels,
               ),
             ),
           ),
-        ),
+
+          // Dock：只在 compact / medium 出现；宽屏交给左侧 rail
+          if (!rail)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 20 + bottomSafe,
+              child: Center(
+                child: DgutDock(
+                  items: _dockItems,
+                  page: _pagePos,
+                  onSelect: _goTo,
+                  onReselect: (_) => _reselect.fire(_scroll[_index]),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    return Scaffold(
+      backgroundColor: c.bgDeep,
+      body: Stack(
+        children: [
+          // 背景铺满整屏，不跟着内容限宽
+          const Positioned.fill(child: _AmbientBg()),
+          Row(
+            children: [
+              if (rail)
+                DgutRail(
+                  items: _dockItems,
+                  page: _pagePos,
+                  onSelect: _goTo,
+                  onReselect: (_) => _reselect.fire(_scroll[_index]),
+                ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double maxW = DgutWindow.contentMaxOf(wc);
+                    final double width =
+                        maxW.isFinite && constraints.maxWidth > maxW
+                        ? maxW
+                        : constraints.maxWidth;
+                    return Center(
+                      child: SizedBox(
+                        width: width,
+                        height: constraints.maxHeight,
+                        child: stage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

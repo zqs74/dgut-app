@@ -41,7 +41,7 @@ class _ChangelogPageState extends State<ChangelogPage> {
             title: '版本更新历史',
             offset: _offset,
             topInset: MediaQuery.paddingOf(context).top,
-            footerHeight: 120,
+            footerHeight: 120 + MediaQuery.viewPaddingOf(context).bottom,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(

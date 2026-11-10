@@ -22,9 +22,28 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.4.3';
+const String kCurrentVersion = '0.5.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.5.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '平板适配：宽屏改为左侧导航栏 + 居中内容区，不再锁在 460 宽',
+        ],
+      ),
+      ChangelogSection(
+        title: '优化',
+        items: [
+          '内容按窗口宽度分三档：手机铺满、平板 720、大屏 840 居中',
+          '底部 Dock 抬起一个手势条的高度，不再被系统横条压住',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.4.3',
     date: '2026-11-10',
