@@ -30,8 +30,9 @@ class CourseDetailPage extends StatefulWidget {
 }
 
 class _CourseDetailPageState extends State<CourseDetailPage> {
-  final ValueNotifier<DgutScrollInfo> _offset =
-      ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero);
+  final ValueNotifier<DgutScrollInfo> _offset = ValueNotifier<DgutScrollInfo>(
+    DgutScrollInfo.zero,
+  );
 
   bool _armed = false;
 
@@ -45,7 +46,9 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
 
   int _focusIndex(Course c) {
     final int i = c.slots.indexWhere(
-      (s) => s.weekday == widget.focusWeekday && s.startSlot == widget.focusStartSlot,
+      (s) =>
+          s.weekday == widget.focusWeekday &&
+          s.startSlot == widget.focusStartSlot,
     );
     return i < 0 ? 0 : i;
   }
@@ -55,6 +58,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
       MaterialPageRoute<bool>(
         builder: (_) => CourseEditPage(course: c, slotIndex: index),
       ),
+    );
+    if (mounted) setState(() => _armed = false);
+  }
+
+  Future<void> _addSlot(Course c) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => CourseEditPage(course: c)),
     );
     if (mounted) setState(() => _armed = false);
   }
@@ -84,7 +94,11 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      DgutSpace.pad, DgutSpace.s2, DgutSpace.pad, 0),
+                    DgutSpace.pad,
+                    DgutSpace.s2,
+                    DgutSpace.pad,
+                    0,
+                  ),
                   child: Text(
                     '这门课已经删掉了。',
                     style: DgutType.body.copyWith(color: c.ink3),
@@ -105,7 +119,8 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         return Scaffold(
           backgroundColor: c.bg,
           body: DgutPageScaffold(
-            eyebrow: '周${'一二三四五六日'[slot.weekday - 1]} · '
+            eyebrow:
+                '周${'一二三四五六日'[slot.weekday - 1]} · '
                 '第 ${slot.startSlot}–${slot.endSlot} 节',
             title: course.name,
             offset: _offset,
@@ -114,7 +129,11 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    DgutSpace.pad, DgutSpace.s1, DgutSpace.pad, 0),
+                  DgutSpace.pad,
+                  DgutSpace.s1,
+                  DgutSpace.pad,
+                  0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -133,7 +152,8 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     DgutGroupHead(title: '全部时间段'),
                     for (var i = 0; i < course.slots.length; i++)
                       DgutRow(
-                        title: '周${'一二三四五六日'[course.slots[i].weekday - 1]}'
+                        title:
+                            '周${'一二三四五六日'[course.slots[i].weekday - 1]}'
                             ' · 第 ${course.slots[i].startSlot}–${course.slots[i].endSlot} 节',
                         subtitle: [
                           formatWeeks(course.slots[i].weeks),
@@ -141,11 +161,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                             course.slots[i].room,
                         ].join(' · '),
                         value: dgutTimeSpan(
-                            course.slots[i].startSlot,
-                            course.slots[i].slotCount),
+                          course.slots[i].startSlot,
+                          course.slots[i].slotCount,
+                        ),
                         showChevron: false,
                         onTap: () => _edit(course, i),
                       ),
+                    DgutRow(title: '再加一个时间段', onTap: () => _addSlot(course)),
                     DgutGroupHead(title: '周次分布'),
                     _WeekBars(
                       weeks: slot.weeks,

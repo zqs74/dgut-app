@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.7.1';
+const String kCurrentVersion = '0.7.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.7.2',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '添加与编辑页底部固定保存条，不用滚到底找按钮',
+          '撞课时在保存条上方提示与哪门课、哪几周冲突，按钮变「仍然保存」',
+          '课程详情可以再加一个时间段',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.7.1',
     date: '2026-11-10',

@@ -38,8 +38,9 @@ class CourseEditPage extends StatefulWidget {
 }
 
 class _CourseEditPageState extends State<CourseEditPage> {
-  final ValueNotifier<DgutScrollInfo> _offset =
-      ValueNotifier<DgutScrollInfo>(DgutScrollInfo.zero);
+  final ValueNotifier<DgutScrollInfo> _offset = ValueNotifier<DgutScrollInfo>(
+    DgutScrollInfo.zero,
+  );
 
   late final TextEditingController _name;
   late final TextEditingController _teacher;
@@ -146,169 +147,289 @@ class _CourseEditPageState extends State<CourseEditPage> {
     if (mounted) Navigator.of(context).pop(true);
   }
 
+  /// 与已有课程逐段比对：同一天 ∧ 节次相交 ∧ 周次有交集 ⇒ 冲突
+  List<String> _conflictLines() {
+    final int end = _startSlot + _slotCount - 1;
+    final List<String> out = <String>[];
+    for (final Course c in TimetableRepository.instance.courses) {
+      if (c.id == widget.course?.id) continue;
+      for (final CourseSlot s in c.slots) {
+        if (s.weekday != _weekday) continue;
+        if (s.startSlot > end || s.endSlot < _startSlot) continue;
+        final List<int> common = s.weeks.where(_weeks.contains).toList()
+          ..sort();
+        if (common.isEmpty) continue;
+        out.add(
+          '与《${c.name}》周${'一二三四五六日'[_weekday - 1]} '
+          '${s.startSlot}–${s.endSlot} 节冲突（${formatWeeks(common)}）',
+        );
+        break;
+      }
+    }
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
     final int weekCount = TimetableRepository.instance.calendar.weekCount;
+    final List<String> conflicts = _conflictLines();
 
     return Scaffold(
       backgroundColor: c.bg,
-      body: DgutPageScaffold(
-        eyebrow: _isNewCourse ? '手动录入' : '课程',
-        title: _isNewCourse ? '添加课程' : '编辑课程',
-        offset: _offset,
-        footerHeight: 40,
-        onBack: () => Navigator.of(context).maybePop(),
+      body: Stack(
         children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              DgutSpace.pad, DgutSpace.s2, DgutSpace.pad, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          DgutPageScaffold(
+            eyebrow: _isNewCourse ? '手动录入' : '课程',
+            title: _isNewCourse ? '添加课程' : '编辑课程',
+            offset: _offset,
+            footerHeight: 170,
+            onBack: () => Navigator.of(context).maybePop(),
             children: [
-              _Field(label: '课程名', controller: _name, hint: ''),
-              _Field(label: '教师', controller: _teacher, hint: ''),
-              _Field(label: '地点', controller: _room, hint: '7B-311'),
-              _Field(
-                label: '备注',
-                controller: _note,
-                hint: '点名、水课',
-              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DgutSpace.pad,
+                  DgutSpace.s2,
+                  DgutSpace.pad,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Field(label: '课程名', controller: _name, hint: ''),
+                    _Field(label: '教师', controller: _teacher, hint: ''),
+                    _Field(label: '地点', controller: _room, hint: '7B-311'),
+                    _Field(label: '备注', controller: _note, hint: '点名、水课'),
 
-              const DgutGroupHead(title: '星期'),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var d = 1; d <= 7; d++)
-                    _Pill(
-                      label: const ['一', '二', '三', '四', '五', '六', '日'][d - 1],
-                      selected: _weekday == d,
-                      onTap: () => setState(() => _weekday = d),
+                    const DgutGroupHead(title: '星期'),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (var d = 1; d <= 7; d++)
+                          _Pill(
+                            label: const [
+                              '一',
+                              '二',
+                              '三',
+                              '四',
+                              '五',
+                              '六',
+                              '日',
+                            ][d - 1],
+                            selected: _weekday == d,
+                            onTap: () => setState(() => _weekday = d),
+                          ),
+                      ],
                     ),
-                ],
-              ),
 
-              const DgutGroupHead(title: '节次'),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var s = 1; s <= 12; s++)
-                    _Pill(
-                      label: '$s',
-                      selected: _startSlot == s,
-                      onTap: () => setState(() => _startSlot = s),
+                    const DgutGroupHead(title: '节次'),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (var s = 1; s <= 12; s++)
+                          _Pill(
+                            label: '$s',
+                            selected: _startSlot == s,
+                            onTap: () => setState(() => _startSlot = s),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text('连上',
-                      style: DgutType.footnote.copyWith(color: c.ink3)),
-                  const SizedBox(width: 10),
-                  for (var n = 1; n <= 4; n++) ...[
-                    _Pill(
-                      label: '$n 节',
-                      selected: _slotCount == n,
-                      onTap: () => setState(() => _slotCount = n),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          '连上',
+                          style: DgutType.footnote.copyWith(color: c.ink3),
+                        ),
+                        const SizedBox(width: 10),
+                        for (var n = 1; n <= 4; n++) ...[
+                          _Pill(
+                            label: '$n 节',
+                            selected: _slotCount == n,
+                            onTap: () => setState(() => _slotCount = n),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 8),
+
+                    const DgutGroupHead(title: '上课周'),
+                    Row(
+                      children: [
+                        DgutButton(
+                          label: '全选',
+                          size: DgutButtonSize.sm,
+                          variant: DgutButtonVariant.plain,
+                          onTap: () => setState(
+                            () => _weeks = <int>{
+                              for (var w = 1; w <= weekCount; w++) w,
+                            },
+                          ),
+                        ),
+                        DgutButton(
+                          label: '单周',
+                          size: DgutButtonSize.sm,
+                          variant: DgutButtonVariant.plain,
+                          onTap: () => setState(
+                            () => _weeks = <int>{
+                              for (var w = 1; w <= weekCount; w += 2) w,
+                            },
+                          ),
+                        ),
+                        DgutButton(
+                          label: '双周',
+                          size: DgutButtonSize.sm,
+                          variant: DgutButtonVariant.plain,
+                          onTap: () => setState(
+                            () => _weeks = <int>{
+                              for (var w = 2; w <= weekCount; w += 2) w,
+                            },
+                          ),
+                        ),
+                        DgutButton(
+                          label: '清空',
+                          size: DgutButtonSize.sm,
+                          variant: DgutButtonVariant.plain,
+                          onTap: () => setState(() => _weeks = <int>{}),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (var w = 1; w <= weekCount; w++)
+                          _WeekDot(
+                            week: w,
+                            selected: _weeks.contains(w),
+                            onTap: () => setState(() {
+                              if (!_weeks.remove(w)) _weeks.add(w);
+                            }),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _weeks.isEmpty ? '未选周次' : formatWeeks(_weeks.toList()),
+                      style: DgutType.caption1.copyWith(color: c.ink3),
+                    ),
+
+                    const DgutGroupHead(title: '颜色'),
+                    Row(
+                      children: [
+                        for (var t = 0; t < 4; t++) ...[
+                          _ToneDot(
+                            tone: t,
+                            selected: _tone == t,
+                            onTap: () => setState(() => _tone = t),
+                          ),
+                          const SizedBox(width: 14),
+                        ],
+                      ],
+                    ),
+
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        style: DgutType.footnote.copyWith(color: c.redInk),
+                      ),
+                    ],
+
+                    const SizedBox(height: DgutSpace.s4),
                   ],
-                ],
-              ),
-
-              const DgutGroupHead(title: '上课周'),
-              Row(
-                children: [
-                  DgutButton(
-                    label: '全选',
-                    size: DgutButtonSize.sm,
-                    variant: DgutButtonVariant.plain,
-                    onTap: () => setState(() =>
-                        _weeks = <int>{for (var w = 1; w <= weekCount; w++) w}),
-                  ),
-                  DgutButton(
-                    label: '单周',
-                    size: DgutButtonSize.sm,
-                    variant: DgutButtonVariant.plain,
-                    onTap: () => setState(() =>
-                        _weeks = <int>{for (var w = 1; w <= weekCount; w += 2) w}),
-                  ),
-                  DgutButton(
-                    label: '双周',
-                    size: DgutButtonSize.sm,
-                    variant: DgutButtonVariant.plain,
-                    onTap: () => setState(() =>
-                        _weeks = <int>{for (var w = 2; w <= weekCount; w += 2) w}),
-                  ),
-                  DgutButton(
-                    label: '清空',
-                    size: DgutButtonSize.sm,
-                    variant: DgutButtonVariant.plain,
-                    onTap: () => setState(() => _weeks = <int>{}),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (var w = 1; w <= weekCount; w++)
-                    _WeekDot(
-                      week: w,
-                      selected: _weeks.contains(w),
-                      onTap: () => setState(() {
-                        if (!_weeks.remove(w)) _weeks.add(w);
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _weeks.isEmpty ? '未选周次' : formatWeeks(_weeks.toList()),
-                style: DgutType.caption1.copyWith(color: c.ink3),
-              ),
-
-              const DgutGroupHead(title: '颜色'),
-              Row(
-                children: [
-                  for (var t = 0; t < 4; t++) ...[
-                    _ToneDot(
-                      tone: t,
-                      selected: _tone == t,
-                      onTap: () => setState(() => _tone = t),
-                    ),
-                    const SizedBox(width: 14),
-                  ],
-                ],
-              ),
-
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(_error!,
-                    style: DgutType.footnote.copyWith(color: c.redInk)),
-              ],
-
-              const SizedBox(height: DgutSpace.s4),
-              DgutButton(
-                label: '保存',
-                size: DgutButtonSize.lg,
-                variant: DgutButtonVariant.filled,
-                block: true,
-                onTap: _save,
+                ),
               ),
             ],
           ),
-        ),
-      ],
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _BottomBar(conflicts: conflicts, onSave: _save),
+          ),
+        ],
       ),
     );
   }
 }
 
+/// 底部固定条：冲突提示 + 主按钮。表单再长也不用滚到底去找保存。
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({required this.conflicts, required this.onSave});
+
+  final List<String> conflicts;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.bg,
+        border: Border(top: BorderSide(color: c.line, width: 1)),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(
+          DgutSpace.pad,
+          10,
+          DgutSpace.pad,
+          10,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (conflicts.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: c.orange.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(DgutRadius.r1),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 16,
+                      color: c.orangeInk,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        conflicts.join('\n'),
+                        style: DgutType.caption1.copyWith(
+                          color: c.orangeInk,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            DgutButton(
+              label: conflicts.isEmpty ? '保存' : '仍然保存',
+              size: DgutButtonSize.lg,
+              variant: DgutButtonVariant.filled,
+              block: true,
+              onTap: onSave,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _Field extends StatelessWidget {
   const _Field({required this.label, required this.controller, this.hint});
@@ -380,8 +501,9 @@ class _Pill extends StatelessWidget {
             color: selected ? c.blue.withValues(alpha: 0.12) : c.fill,
             borderRadius: BorderRadius.circular(DgutRadius.full),
             border: Border.all(
-              color:
-                  selected ? c.blue.withValues(alpha: 0.55) : Colors.transparent,
+              color: selected
+                  ? c.blue.withValues(alpha: 0.55)
+                  : Colors.transparent,
               width: 1,
             ),
           ),
