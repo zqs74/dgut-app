@@ -22,9 +22,27 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.12.0';
+const String kCurrentVersion = '0.13.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.13.0',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '「我的」可以登录莞工统一身份认证，登录后显示姓名、学号、学院、专业、年级与班级',
+          '支持退出登录，退出时会一并通知统一身份认证注销',
+        ],
+      ),
+      ChangelogSection(
+        title: '移除',
+        items: ['首页的待办占位块（待办与日程不做了）'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.12.0',
     date: '2026-11-10',

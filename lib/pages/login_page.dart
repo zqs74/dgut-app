@@ -1,0 +1,297 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+import '../components/dgut_basics.dart';
+import '../model/identity.dart';
+import '../services/identity_parser.dart';
+import '../services/session.dart';
+import '../theme/dgut_tokens.dart';
+
+/// 登录莞工统一身份认证。
+///
+/// 做三件事：把学工系统的页面打开（没登录它会自己跳 CAS）、
+/// 用户登录完之后从页面上把身份读出来、存进本机。
+///
+/// **不碰密码**：输入发生在校方自己的 CAS 页面上，App 拿不到也不需要。
+/// **不需要"把登录态传给别的系统"**：Android WebView 的 cookie 是进程级共享的，
+/// 这次登录种下的 CAS cookie，其余接入同一 CAS 的系统被打开时会自动带上。
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  /// 学工系统首页。没登录时它会 302 到 `auth.dgut.edu.cn`，
+  /// 登录完落回这里，默认 iframe 就是「基本信息」页。
+  static const String _entryUrl = 'https://stu.dgut.edu.cn/index.jsp';
+
+  /// 递归往下找 iframe，拿到第一个同时含「学号」「姓名」的正文。
+  ///
+  /// 学工的外壳页只有姓名（顶栏），学号/学院那些都在 iframe 的
+  /// `basicInfo.jsp` 里；两者同域，`contentDocument` 能直接读。
+  static const String _grabJs =
+      "(function(){"
+      "function txt(doc,depth){"
+      "if(!doc||depth>4)return '';"
+      "var t='';try{t=doc.body?doc.body.innerText:'';}catch(e){t='';}"
+      "if(t&&t.indexOf('学号')>=0&&t.indexOf('姓名')>=0)return t;"
+      "var fs=[];try{fs=doc.querySelectorAll('iframe,frame');}catch(e){}"
+      "for(var i=0;i<fs.length;i++){"
+      "var h='';try{h=txt(fs[i].contentDocument,depth+1);}catch(e){}"
+      "if(h)return h;}"
+      "return t;}"
+      "return txt(document,0);})()";
+
+  WebViewController? _web;
+  Timer? _timeout;
+  bool _busy = false;
+  bool _failed = false;
+  String _status = '正在打开学工系统';
+
+  bool get _android =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_android) _boot();
+  }
+
+  @override
+  void dispose() {
+    _timeout?.cancel();
+    super.dispose();
+  }
+
+  void _set(String status, {bool failed = false}) {
+    if (!mounted) return;
+    setState(() {
+      _status = status;
+      _failed = failed;
+    });
+  }
+
+  void _boot() {
+    final WebViewController controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            if (url.contains('authserver')) {
+              _set('请在下方登录');
+            } else if (url.contains('stu.dgut.edu.cn')) {
+              _set('正在读取身份');
+            }
+          },
+          onPageFinished: (String url) => _onLoaded(url),
+          onWebResourceError: (WebResourceError e) {
+            if (!_busy && _web != null) _set('打不开学工系统', failed: true);
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(_entryUrl));
+    setState(() {
+      _web = controller;
+      _failed = false;
+      _status = '正在打开学工系统';
+    });
+  }
+
+  Future<void> _onLoaded(String url) async {
+    if (_busy) return;
+    if (url.contains('authserver')) {
+      _set('请在下方登录');
+      return;
+    }
+    if (!url.contains('stu.dgut.edu.cn')) return;
+    await _scrape();
+  }
+
+  Future<void> _scrape() async {
+    _busy = true;
+    _set('正在读取身份');
+    _timeout?.cancel();
+    _timeout = Timer(const Duration(seconds: 25), () {
+      if (_busy && mounted) {
+        _busy = false;
+        _set('读取超时', failed: true);
+      }
+    });
+
+    String text = '';
+    DgutIdentity? identity;
+    // iframe 是异步加载的：一次读不到就等一会儿再读，最多 6 次
+    for (var attempt = 0; attempt < 6; attempt++) {
+      try {
+        final Object raw = await _web!.runJavaScriptReturningResult(_grabJs);
+        text = raw is String ? raw : '$raw';
+        // runJavaScriptReturningResult 会把字符串结果再包一层引号
+        if (text.length > 1 && text.startsWith('"') && text.endsWith('"')) {
+          try {
+            text = jsonDecode(text) as String;
+          } catch (_) {}
+        }
+      } catch (_) {
+        text = '';
+      }
+      identity = parseIdentity(text);
+      if (identity != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+    }
+
+    _timeout?.cancel();
+    _busy = false;
+
+    if (identity == null) {
+      _set('没读到身份信息', failed: true);
+      return;
+    }
+
+    await Session.instance.setIdentity(identity);
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    final double topInset = MediaQuery.viewPaddingOf(context).top;
+
+    return Scaffold(
+      backgroundColor: c.bg,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: _web == null
+                ? _unsupported(c)
+                : WebViewWidget(controller: _web!),
+          ),
+          Positioned(
+            left: DgutSpace.pad,
+            top: topInset + 8,
+            child: _GlassRoundButton(
+              icon: Icons.arrow_back_rounded,
+              onTap: () => Navigator.of(context).maybePop(),
+            ),
+          ),
+          Positioned(
+            left: DgutSpace.pad,
+            right: DgutSpace.pad,
+            bottom: 24,
+            child: Center(
+              child: _StatusBar(
+                text: _status,
+                // 登录中不给"重试"：重试会把用户正在输的密码页刷掉
+                onRetry: _failed ? _boot : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _unsupported(DgutColors c) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DgutSpace.s5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '登录在安卓版可用',
+              style: DgutType.body.copyWith(color: c.ink2),
+            ),
+            const SizedBox(height: DgutSpace.s3),
+            Text(
+              '网页预览里没有 WebView，登录与抓取都跑不起来',
+              textAlign: TextAlign.center,
+              style: DgutType.footnote.copyWith(color: c.ink3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassRoundButton extends StatelessWidget {
+  const _GlassRoundButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    return DgutPressable(
+      onTap: onTap,
+      pressedOpacity: 1,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: c.bg.withValues(alpha: 0.92),
+          shape: BoxShape.circle,
+          boxShadow: DgutShadows.float,
+        ),
+        child: Icon(icon, size: 20, color: c.ink),
+      ),
+    );
+  }
+}
+
+class _StatusBar extends StatelessWidget {
+  const _StatusBar({required this.text, this.onRetry});
+
+  final String text;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final DgutColors c = context.dg;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: c.glassDock.withValues(alpha: dark ? 0.72 : 0.82),
+        borderRadius: BorderRadius.circular(DgutRadius.full),
+        border: Border.all(color: c.glassEdge, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: DgutType.caption1.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: c.ink,
+            ),
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(width: 10),
+            DgutPressable(
+              onTap: onRetry,
+              child: Text(
+                '重试',
+                style: DgutType.caption1.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: c.blueInk,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

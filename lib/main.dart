@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'services/session.dart';
 import 'shell/dgut_shell.dart';
 import 'store/store.dart';
 import 'store/timetable_repository.dart';
@@ -12,6 +13,8 @@ Future<void> main() async {
   await Store.instance.init();
   final TimetableRepository repo = TimetableRepository.instance;
   await repo.load();
+  // 登录态也一起读：进「我的」时不该先闪一下"未登录"
+  await Session.instance.load();
 
   // 验收用的深链：?seed=1 写入示例课表（仅在为空时），?seed=reset 清空
   final String seed = Uri.base.queryParameters['seed'] ?? '';
