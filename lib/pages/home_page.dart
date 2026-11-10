@@ -102,23 +102,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                 ],
               ),
-            // 待办：只露最急一条。**这一段仍是占位**，等待办模块（F3 后半）接真数据
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: DgutSpace.pad),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DgutGroupHead(title: '待办', action: '全部 2 条', onAction: () {}),
-                  DgutRow(
-                    title: '晚归申请未提交',
-                    subtitle: '今晚 22:00 截止',
-                    tone: DgutRowTone.urgent,
-                    showDivider: false,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
             // 本周概况：一行统计，不重复课程清单
             Padding(
               padding: const EdgeInsets.fromLTRB(
