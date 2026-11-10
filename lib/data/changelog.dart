@@ -22,9 +22,21 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.6.2';
+const String kCurrentVersion = '0.6.3';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.6.3',
+    date: '2026-11-10',
+    sections: [
+      ChangelogSection(
+        title: '修复',
+        items: [
+          '修复二级页面标题收起时与顶栏标题错位、出现两个标题的问题',
+        ],
+      ),
+    ],
+  ),
   ChangelogEntry(
     version: 'v0.6.2',
     date: '2026-11-10',

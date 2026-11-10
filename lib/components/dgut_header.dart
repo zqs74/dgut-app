@@ -78,6 +78,9 @@ class DgutLargeHeader extends StatelessWidget {
             transform: Matrix4.identity()
               // 缩小时向右让出返回按钮的位置（大标题本身不右移，版式才不乱）
               ..translateByDouble(leftInset * m, -5 * t, 0, 1)
+              // 二级页整块下让过 topGap，标题在收缩过程中要把这 14 补回去：
+              // 不然它钉住的位置会比顶栏标题低 14，交接时出现两个标题错位
+              ..translateByDouble(0, -topGap * m, 0, 1)
               ..scaleByDouble(s, s, 1, 1),
             child: Opacity(
               opacity: (1 - fade).clamp(0.0, 1.0) * (1 - 0.92 * t).clamp(0.0, 1.0),
