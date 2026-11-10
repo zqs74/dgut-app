@@ -179,9 +179,6 @@ class _DgutShellState extends State<DgutShell> {
         offset: _scroll[4],
         themeMode: widget.themeMode,
         onThemeModeChanged: widget.onThemeModeChanged,
-        onOpenChangelog: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const ChangelogPage())),
       ),
     ];
 

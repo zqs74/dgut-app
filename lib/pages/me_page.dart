@@ -4,12 +4,11 @@ import '../components/dgut_basics.dart';
 import '../components/dgut_confirm_sheet.dart';
 import '../components/dgut_page_scaffold.dart';
 import '../components/dgut_theme_sheet.dart';
-import '../components/dgut_update_sheet.dart';
 import '../data/changelog.dart';
 import '../model/identity.dart';
 import '../services/session.dart';
-import '../services/update_service.dart';
 import '../theme/dgut_tokens.dart';
+import 'about_page.dart';
 import 'login_page.dart';
 import 'logout_page.dart';
 
@@ -19,13 +18,11 @@ class MePage extends StatelessWidget {
     required this.offset,
     required this.themeMode,
     required this.onThemeModeChanged,
-    required this.onOpenChangelog,
   });
 
   final ValueNotifier<DgutScrollInfo> offset;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
-  final VoidCallback onOpenChangelog;
 
   String get _themeLabel => switch (themeMode) {
     ThemeMode.system => '跟随系统',
@@ -109,9 +106,7 @@ class MePage extends StatelessWidget {
                               id.detail,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: DgutType.caption1.copyWith(
-                                color: c.ink4,
-                              ),
+                              style: DgutType.caption1.copyWith(color: c.ink4),
                             ),
                           ],
                         ],
@@ -184,7 +179,7 @@ class MePage extends StatelessWidget {
                 ],
               ),
             ),
-            // 设置
+            // 设置：只留日常会动的。检查更新与版本历史收进「关于」
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: DgutSpace.pad),
               child: Column(
@@ -204,17 +199,12 @@ class MePage extends StatelessWidget {
                     },
                   ),
                   DgutRow(title: '通知与提醒', onTap: () {}),
-                  if (UpdateService.isSupported)
-                    DgutRow(
-                      title: '检查更新',
-                      value: 'v$kCurrentVersion',
-                      onTap: () => showDgutUpdateSheet(context),
-                    ),
-                  DgutRow(title: '版本更新历史', onTap: onOpenChangelog),
                   DgutRow(
                     title: '关于莞工 App',
                     value: 'v$kCurrentVersion',
-                    onTap: () {},
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (_) => const AboutPage()),
+                    ),
                   ),
                   if (id != null)
                     DgutRow(
