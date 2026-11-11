@@ -61,6 +61,7 @@ class ServiceEntry {
     required this.icon,
     this.target = '',
     this.aliases = const <String>[],
+    this.requiresSession = false,
     this.comingNote,
   }) : assert(
          access != ServiceAccess.coming || comingNote != null,
@@ -100,11 +101,15 @@ class ServiceEntry {
   /// `access == coming` 时点下去显示的那句话。
   final String? comingNote;
 
+  /// App 内页面（`native`）也可能要登录才拿得到数据，比如成绩。
+  /// `access` 只说明「去哪儿」，说明不了「要不要身份」，所以单独标一个。
+  final bool requiresSession;
+
   /// 是否需要先登录才能用。
   ///
   /// `web` 项都靠 CAS cookie 放行，没登录进去会被弹回认证页；
   /// 容器层据此决定要不要先提示登录。`browser` / `wechat` 由外部应用承接，不需要。
-  bool get needsLogin => access == ServiceAccess.web;
+  bool get needsLogin => access == ServiceAccess.web || requiresSession;
 
   /// 是否点了有反应（`coming` 之外都有）。
   bool get isActionable => access != ServiceAccess.coming;
@@ -131,9 +136,9 @@ const List<ServiceEntry> kServiceRegistry = <ServiceEntry>[
     name: '成绩查询',
     subtitle: '上学期成绩与绩点',
     group: ServiceGroup.study,
-    access: ServiceAccess.web,
+    access: ServiceAccess.native,
+    requiresSession: true,
     icon: Icons.bar_chart_outlined,
-    target: 'https://jwx.dgut.edu.cn',
     aliases: <String>['成绩', '分数', '绩点', '分'],
   ),
   ServiceEntry(

@@ -107,7 +107,7 @@ void main() {
 
     test('needsLogin 只对 web 项为真', () {
       for (final ServiceEntry e in kServiceRegistry) {
-        expect(e.needsLogin, e.access == ServiceAccess.web, reason: e.id);
+        expect(e.needsLogin, e.access == ServiceAccess.web || e.requiresSession, reason: e.id);
       }
     });
   });

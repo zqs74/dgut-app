@@ -20,7 +20,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # 原因：设备上历史安装过 versionCode 2032 的 0.14.0（不是从当前仓库构建的），
 # 系统会把 versionCode 更小的新包当成降级，直接拒绝安装
 # （INSTALL_FAILED_VERSION_DOWNGRADE）。以后递增这个数就行，不要退回两位数。
-version: 0.17.3+2045
+version: 0.18.0+2046
 
 environment:
   sdk: ^3.13.7

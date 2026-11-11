@@ -22,9 +22,28 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.17.3';
+const String kCurrentVersion = '0.18.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.18.0',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '成绩查询真集成：借已登录的网页会话抓教务表格，解析后原生渲染，不再套浏览器',
+          '成绩本地缓存，进页面先显示上次结果再后台刷新',
+          '读不到成绩时可以直接去登录教务',
+        ],
+      ),
+      ChangelogSection(
+        title: '调整',
+        items: ['服务注册表加 requiresSession，标出需要登录的 App 内页面'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.17.3',
     date: '2026-11-11',

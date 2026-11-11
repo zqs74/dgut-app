@@ -7,6 +7,7 @@ import '../data/service_registry.dart';
 import '../services/service_launcher.dart';
 import '../theme/dgut_tokens.dart';
 import 'about_page.dart';
+import 'score_page.dart';
 
 /// 服务页：22 项全部来自 [kServiceRegistry]，这一页只负责画。
 ///
@@ -67,6 +68,10 @@ class ServicesPage extends StatelessWidget {
       switch (entry.id) {
         case 'timetable':
           onOpenTab(1);
+          return;
+        case 'score':
+          Navigator.of(context)
+              .push(MaterialPageRoute<void>(builder: (_) => const ScorePage()));
           return;
         case 'about':
           Navigator.of(context)
