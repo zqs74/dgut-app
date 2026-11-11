@@ -108,25 +108,23 @@ class _DgutShellState extends State<DgutShell> {
         if (m != null) widget.onThemeModeChanged(m);
       });
     } else if (boot == 'course') {
-      Navigator.of(context).push(
-        MaterialPageRoute<bool>(builder: (_) => const CourseEditPage()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<bool>(builder: (_) => const CourseEditPage()));
     } else if (boot == 'settings') {
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const TimetableSettingsPage()),
       );
     } else if (boot == 'tables') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const TableListPage()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const TableListPage()));
     } else if (boot == 'courses') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const CourseListPage()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const CourseListPage()));
     } else if (boot == 'time') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const TimeTablePage()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const TimeTablePage()));
     } else if (boot == 'detail') {
       final List<Course> list = TimetableRepository.instance.courses;
       if (list.isNotEmpty) {
@@ -173,7 +171,7 @@ class _DgutShellState extends State<DgutShell> {
     final List<Widget> pages = [
       HomePage(offset: _scroll[0], onOpenTab: _goTo),
       TimetablePage(offset: _scroll[1]),
-      ServicesPage(offset: _scroll[2]),
+      ServicesPage(offset: _scroll[2], onOpenTab: _goTo),
       MessagesPage(offset: _scroll[3]),
       MePage(
         offset: _scroll[4],
@@ -192,11 +190,8 @@ class _DgutShellState extends State<DgutShell> {
             controller: _pc,
             itemCount: pages.length,
             onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (context, i) => _ProgressivePage(
-              page: _pagePos,
-              index: i,
-              child: pages[i],
-            ),
+            itemBuilder: (context, i) =>
+                _ProgressivePage(page: _pagePos, index: i, child: pages[i]),
           ),
 
           // 底部边缘（在 Dock 之下）

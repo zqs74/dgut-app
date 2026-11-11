@@ -22,9 +22,20 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.15.0';
+const String kCurrentVersion = '0.15.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.15.1',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: ['服务页 22 项改为按注册表渲染，分组与项数由数据算出', '点还没接通的项会给一句说明，不再毫无反应'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.15.0',
     date: '2026-11-11',
