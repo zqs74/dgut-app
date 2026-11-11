@@ -365,7 +365,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
         _goBack();
       },
       child: DgutWebScaffold(
-        title: widget.title,
         onBack: _goBack,
         actions: _web == null
             ? const <Widget>[]

@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../components/dgut_basics.dart';
 import '../components/dgut_glass_button.dart';
+import '../components/dgut_status_pill.dart';
+import '../components/dgut_web_scaffold.dart';
 import '../model/identity.dart';
 import '../services/identity_parser.dart';
 import '../services/session.dart';
@@ -220,50 +220,24 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    final double topInset = MediaQuery.viewPaddingOf(context).top;
 
-    return Scaffold(
-      backgroundColor: c.bg,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: _web == null
-                ? _unsupported(c)
-                : WebViewWidget(controller: _web!),
-          ),
-          Positioned(
-            left: DgutSpace.pad,
-            top: topInset + 8,
-            child: DgutGlassButton(
-              icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          // 右下角：切手机 / 电脑端显示
-          Positioned(
-            right: DgutSpace.pad,
-            bottom: 24,
-            child: DgutGlassButton(
-              icon: _mobileUi
-                  ? Icons.desktop_windows_outlined
-                  : Icons.smartphone_rounded,
-              onTap: _toggleUi,
-            ),
-          ),
-          Positioned(
-            left: DgutSpace.pad + 52,
-            right: DgutSpace.pad + 52,
-            bottom: 24,
-            child: Center(
-              child: _StatusBar(
-                text: _status,
-                // 登录中不给"重试"：重试会把用户正在输的密码页刷掉
-                onRetry: _failed ? _boot : null,
-              ),
-            ),
-          ),
-        ],
+    return DgutWebScaffold(
+      onBack: () => Navigator.of(context).maybePop(),
+      actions: <Widget>[
+        DgutGlassButton(
+          icon: _mobileUi
+              ? Icons.desktop_windows_outlined
+              : Icons.smartphone_rounded,
+          onTap: _toggleUi,
+        ),
+      ],
+      bottom: DgutStatusPill(
+        text: _status,
+        // 登录中不给「重试」：重试会把用户正在输的密码页刷掉
+        actionLabel: _failed ? '重试' : null,
+        onAction: _failed ? _boot : null,
       ),
+      child: _web == null ? _unsupported(c) : WebViewWidget(controller: _web!),
     );
   }
 
@@ -290,61 +264,3 @@ class _LoginPageState extends State<LoginPage> {
 
 /// 玻璃圆钮：与二级页的返回按钮、Dock 同一套材质
 /// （半透明 + 模糊 + 发丝边 + 外阴影）。
-
-class _StatusBar extends StatelessWidget {
-  const _StatusBar({required this.text, this.onRetry});
-
-  final String text;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DgutRadius.full),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          decoration: BoxDecoration(
-            color: c.glassDock.withValues(alpha: dark ? 0.55 : 0.52),
-            borderRadius: BorderRadius.circular(DgutRadius.full),
-            border: Border.all(color: c.glassEdge, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DgutType.caption1.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: c.ink,
-                  ),
-                ),
-              ),
-              if (onRetry != null) ...[
-                const SizedBox(width: 10),
-                DgutPressable(
-                  onTap: onRetry,
-                  child: Text(
-                    '重试',
-                    style: DgutType.caption1.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: c.blueInk,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

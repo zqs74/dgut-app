@@ -22,9 +22,20 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.17.0';
+const String kCurrentVersion = '0.17.1';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.17.1',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: ['网页模板去掉顶部导航条，只留悬浮的返回与操作按钮', '统一身份认证登录页也改用同一套网页模板'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.17.0',
     date: '2026-11-11',

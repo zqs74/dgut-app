@@ -165,7 +165,6 @@ class _JwxImportPageState extends State<JwxImportPage> {
     final DgutColors c = context.dg;
 
     return DgutWebScaffold(
-      title: '教务导入',
       onBack: () => Navigator.of(context).maybePop(),
       bottom: DgutStatusPill(
         text: _status,
