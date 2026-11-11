@@ -4,6 +4,7 @@ import '../components/dgut_basics.dart';
 import '../components/dgut_page_scaffold.dart';
 import '../components/dgut_wip.dart';
 import '../data/service_registry.dart';
+import '../services/service_launcher.dart';
 import '../theme/dgut_tokens.dart';
 import 'about_page.dart';
 
@@ -59,30 +60,24 @@ class ServicesPage extends StatelessWidget {
 
   /// 点一项会发生什么。
   ///
-  /// 分三种：App 内自己的页直接去；还没真去处的给一句说明；其余（要走网络或
-  /// 微信的）等 S3 的容器页与分发器 —— 现在先如实说"还没接"，
-  /// 不假装能跳。
+  /// App 内自己的页（课表、关于）在这里分发；其余交给 `service_launcher.dart`
+  /// —— 进 WebView 容器、外跳浏览器、或者如实告诉用户"只有小程序"。
   void _open(BuildContext context, ServiceEntry entry) {
-    switch (entry.access) {
-      case ServiceAccess.native:
-        switch (entry.id) {
-          case 'timetable':
-            onOpenTab(1);
-          case 'about':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute<void>(builder: (_) => const AboutPage()));
-          default:
-            showDgutWip(context, entry.name);
-        }
-      case ServiceAccess.coming:
-        showDgutWip(context, entry.name, note: entry.comingNote);
-      case ServiceAccess.web:
-      case ServiceAccess.browser:
-      case ServiceAccess.wechat:
-        // S3 的 WebView 容器与 S4 的微信引导页接上之前，这里只能是这一句
-        showDgutWip(context, entry.name, note: '「${entry.name}」的去处还要等容器页做好');
+    if (entry.access == ServiceAccess.native) {
+      switch (entry.id) {
+        case 'timetable':
+          onOpenTab(1);
+          return;
+        case 'about':
+          Navigator.of(context)
+              .push(MaterialPageRoute<void>(builder: (_) => const AboutPage()));
+          return;
+        default:
+          showDgutWip(context, entry.name);
+          return;
+      }
     }
+    openService(context, entry);
   }
 }
 

@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.15.1';
+const String kCurrentVersion = '0.16.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.16.0',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '服务页能真正打开网页了：成绩、空教室、桶装水等 13 项进应用内容器',
+          '网页容器支持加载失败重试、在浏览器打开与复制链接',
+          '官网与新闻改为外跳系统浏览器',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.15.1',
     date: '2026-11-11',
