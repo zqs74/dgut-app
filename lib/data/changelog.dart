@@ -22,9 +22,20 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.17.2';
+const String kCurrentVersion = '0.17.3';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.17.3',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: ['网页「更多」菜单与缩放面板改由模板生成，各网页页菜单完全一致', '统一身份认证页补上缩放与切换电脑端'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.17.2',
     date: '2026-11-11',

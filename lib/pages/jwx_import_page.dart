@@ -166,6 +166,8 @@ class _JwxImportPageState extends State<JwxImportPage> {
 
     return DgutWebScaffold(
       onBack: () => Navigator.of(context).maybePop(),
+      menuTitle: '教务导入',
+      onRefresh: _boot,
       bottom: DgutStatusPill(
         text: _status,
         actionLabel: _status == '登录教务' ? null : '重试',

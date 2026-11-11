@@ -7,9 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../components/dgut_basics.dart';
-import '../components/dgut_glass_button.dart';
-import '../components/dgut_sheet.dart';
 import '../components/dgut_status_pill.dart';
 import '../components/dgut_web_scaffold.dart';
 import '../model/identity.dart';
@@ -74,6 +71,9 @@ class _LoginPageState extends State<LoginPage> {
   /// 但它的菜单和表单又是为宽屏排的 —— 两种都有用，所以给个开关。
   bool _mobileUi = true;
 
+  /// 页面缩放。电脑端默认 0.6，手机端默认 1.0
+  double _zoom = 1.0;
+
   bool get _android =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
@@ -109,7 +109,10 @@ class _LoginPageState extends State<LoginPage> {
               _set('正在读取身份');
             }
           },
-          onPageFinished: (String url) => _onLoaded(url),
+          onPageFinished: (String url) {
+            _applyViewport();
+            _onLoaded(url);
+          },
           onWebResourceError: (WebResourceError e) {
             if (!_busy && _web != null) _set('打不开学工系统', failed: true);
           },
@@ -190,26 +193,24 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.of(context).pop(true);
   }
 
-  /// 手机 / 电脑端显示切换。
-  ///
-  /// 改的是页面自己的 `viewport` —— 递归给所有 iframe 一起改，
-  /// 只改外层的话内层那张表还是按原来的宽度排。
-  Future<void> _toggleUi() async {
+  /// 把 viewport 与缩放递归写进页面（含所有 iframe）
+  Future<void> _applyViewport() async {
     final WebViewController? web = _web;
     if (web == null) return;
-    setState(() => _mobileUi = !_mobileUi);
     final String content = _mobileUi
-        ? 'width=device-width,initial-scale=1,maximum-scale=3,user-scalable=yes'
+        ? 'width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes'
         : 'width=1280';
+    final String z = _zoom.toStringAsFixed(2);
     final String js =
         "(function(){"
-        "var c='$content';"
+        "var c='$content';var z='$z';"
         "function apply(doc,depth){"
         "if(!doc||depth>4)return;"
         "try{var m=doc.querySelector('meta[name=viewport]');"
         "if(!m){m=doc.createElement('meta');m.setAttribute('name','viewport');"
-        "doc.head.appendChild(m);}"
+        "if(doc.head)doc.head.appendChild(m);}"
         "m.setAttribute('content',c);}catch(e){}"
+        "try{if(doc.documentElement)doc.documentElement.style.zoom=z;}catch(e){}"
         "try{var fs=doc.querySelectorAll('iframe,frame');"
         "for(var i=0;i<fs.length;i++){"
         "try{apply(fs[i].contentDocument,depth+1);}catch(e){}}}catch(e){}"
@@ -217,8 +218,30 @@ class _LoginPageState extends State<LoginPage> {
         "apply(document,0);return 1;})()";
     try {
       await web.runJavaScript(js);
+    } catch (_) {
+      // 页面还在跳转时注入会失败，下一次加载完还会再来一次
+    }
+  }
+
+  /// 手机 / 电脑端切换：改 viewport 后重新加载一遍
+  Future<void> _toggleUi() async {
+    final WebViewController? web = _web;
+    if (web == null) return;
+    final bool next = !_mobileUi;
+    setState(() {
+      _mobileUi = next;
+      // 电脑端按 1280 宽渲染，手机上必须缩一点才看得全
+      _zoom = next ? 1.0 : 0.6;
+    });
+    await _applyViewport();
+    try {
       await web.reload();
     } catch (_) {}
+  }
+
+  void _onZoomChanged(double z) {
+    setState(() => _zoom = z);
+    _applyViewport();
   }
 
   Future<void> _openInBrowser() async {
@@ -236,56 +259,20 @@ class _LoginPageState extends State<LoginPage> {
     await Clipboard.setData(const ClipboardData(text: _entryUrl));
   }
 
-  void _openMenu() {
-    showDgutSheet<void>(
-      context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          DgutGroupHead(title: '统一身份认证'),
-          DgutRow(
-            title: '刷新',
-            onTap: () {
-              Navigator.of(context).pop();
-              _boot();
-            },
-          ),
-          DgutRow(
-            title: '在浏览器打开',
-            onTap: () {
-              Navigator.of(context).pop();
-              _openInBrowser();
-            },
-          ),
-          DgutRow(
-            title: '复制链接',
-            showDivider: false,
-            onTap: () {
-              Navigator.of(context).pop();
-              _copyLink();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
 
     return DgutWebScaffold(
       onBack: () => Navigator.of(context).maybePop(),
-      actions: <Widget>[
-        DgutGlassButton(
-          icon: _mobileUi
-              ? Icons.desktop_windows_outlined
-              : Icons.smartphone_rounded,
-          onTap: _toggleUi,
-        ),
-        DgutGlassButton(icon: Icons.more_horiz_rounded, onTap: _openMenu),
-      ],
+      menuTitle: '统一身份认证',
+      onRefresh: _boot,
+      onOpenInBrowser: _openInBrowser,
+      onCopyLink: _copyLink,
+      zoom: _web == null ? null : _zoom,
+      onZoomChanged: _web == null ? null : _onZoomChanged,
+      mobileUi: _web == null ? null : _mobileUi,
+      onToggleUi: _web == null ? null : _toggleUi,
       bottom: DgutStatusPill(
         text: _status,
         // 登录中不给「重试」：重试会把用户正在输的密码页刷掉

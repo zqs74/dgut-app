@@ -6,9 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../components/dgut_basics.dart';
-import '../components/dgut_glass_button.dart';
-import '../components/dgut_sheet.dart';
 import '../components/dgut_status_pill.dart';
 import '../components/dgut_web_scaffold.dart';
 import '../theme/dgut_tokens.dart';
@@ -52,25 +49,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
   /// 页面缩放。电脑端默认 0.6，手机端默认 1.0
   double _zoom = 1.0;
 
-  /// 拖滑块时的注入节流：不节流的话每一帧都会往 WebView 里灌一次 JS
-  Timer? _zoomThrottle;
-
-  /// 吸附档位：拖到附近会自动吸过去，也可以直接点
-  static const List<double> _zoomStops = <double>[
-    0.5,
-    0.6,
-    0.75,
-    1.0,
-    1.25,
-    1.5,
-  ];
-
-  static const double _zoomMin = 0.4;
-  static const double _zoomMax = 2.0;
-
-  /// 离档位多近算「吸附」
-  static const double _snapRange = 0.035;
-
   bool get _android =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
@@ -78,12 +56,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
   void initState() {
     super.initState();
     if (_android) _boot();
-  }
-
-  @override
-  void dispose() {
-    _zoomThrottle?.cancel();
-    super.dispose();
   }
 
   void _boot() {
@@ -118,6 +90,11 @@ class _WebContainerPageState extends State<WebContainerPage> {
       )
       ..loadRequest(Uri.parse(widget.url));
     setState(() => _web = controller);
+  }
+
+  void _onZoomChanged(double z) {
+    setState(() => _zoom = z);
+    _applyViewport();
   }
 
   Future<void> _syncCanGoBack() async {
@@ -184,14 +161,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
     await _web?.reload();
   }
 
-  /// 无极调节时把值吸到最近的常用档位，其余按原值走
-  double _snap(double v) {
-    for (final double s in _zoomStops) {
-      if ((v - s).abs() <= _snapRange) return s;
-    }
-    return v.clamp(_zoomMin, _zoomMax);
-  }
-
   /// 返回：有网页历史就先退网页，退到底才退出容器
   Future<void> _goBack() async {
     if (await _web?.canGoBack() ?? false) {
@@ -228,128 +197,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
     });
   }
 
-  void _openMenu() {
-    showDgutSheet<void>(
-      context,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          DgutGroupHead(title: widget.title),
-          DgutRow(
-            title: '刷新',
-            onTap: () {
-              Navigator.of(context).pop();
-              _reload();
-            },
-          ),
-          DgutRow(
-            title: '缩放',
-            value: '${(_zoom * 100).round()}%',
-            onTap: () {
-              Navigator.of(context).pop();
-              _openZoomSheet();
-            },
-          ),
-          DgutRow(
-            title: _mobileUi ? '切换到电脑端' : '切换到手机版',
-            onTap: () {
-              Navigator.of(context).pop();
-              _toggleUi();
-            },
-          ),
-          DgutRow(
-            title: '在浏览器打开',
-            onTap: () {
-              Navigator.of(context).pop();
-              _openInBrowser();
-            },
-          ),
-          DgutRow(
-            title: '复制链接',
-            showDivider: false,
-            onTap: () {
-              Navigator.of(context).pop();
-              _copyLink();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 缩放面板：一条无极滑块 + 六个可直接点的常用档位。
-  ///
-  /// 拖滑块时实时预览（节流注入），拖到档位附近自动吸附；
-  /// 面板关闭时再补一次注入，保证最终值和页面一致。
-  void _openZoomSheet() {
-    double temp = _zoom;
-    Timer? throttle;
-
-    showDgutSheet<void>(
-      context,
-      child: StatefulBuilder(
-        builder: (BuildContext ctx, StateSetter setSheet) {
-          final DgutColors c = ctx.dg;
-
-          void apply(double v) {
-            final double s = _snap(v);
-            setSheet(() => temp = s);
-            setState(() => _zoom = s);
-            throttle?.cancel();
-            throttle = Timer(const Duration(milliseconds: 130), _applyViewport);
-          }
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              DgutGroupHead(title: '缩放'),
-              Center(
-                child: Text(
-                  '${(temp * 100).round()}%',
-                  style: DgutType.title1.copyWith(color: c.ink),
-                ),
-              ),
-              Slider(
-                value: temp.clamp(_zoomMin, _zoomMax),
-                min: _zoomMin,
-                max: _zoomMax,
-                activeColor: c.ink,
-                inactiveColor: c.line,
-                onChanged: apply,
-                onChangeEnd: (_) => _applyViewport(),
-              ),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  for (final double z in _zoomStops)
-                    _ZoomChip(
-                      label: '${(z * 100).round()}%',
-                      selected: (z - temp).abs() < 0.001,
-                      onTap: () => apply(z),
-                    ),
-                ],
-              ),
-              const SizedBox(height: DgutSpace.s2),
-              Text(
-                '拖到附近会自动吸附到常用比例',
-                textAlign: TextAlign.center,
-                style: DgutType.caption1.copyWith(color: c.ink3),
-              ),
-              const SizedBox(height: DgutSpace.s1),
-            ],
-          );
-        },
-      ),
-    ).then((_) {
-      throttle?.cancel();
-      _applyViewport();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -362,20 +209,14 @@ class _WebContainerPageState extends State<WebContainerPage> {
       },
       child: DgutWebScaffold(
         onBack: _goBack,
-        actions: _web == null
-            ? const <Widget>[]
-            : <Widget>[
-                DgutGlassButton(
-                  icon: _mobileUi
-                      ? Icons.desktop_windows_outlined
-                      : Icons.smartphone_rounded,
-                  onTap: _toggleUi,
-                ),
-                DgutGlassButton(
-                  icon: Icons.more_horiz_rounded,
-                  onTap: _openMenu,
-                ),
-              ],
+        menuTitle: widget.title,
+        onRefresh: _reload,
+        onOpenInBrowser: _openInBrowser,
+        onCopyLink: _copyLink,
+        zoom: _web == null ? null : _zoom,
+        onZoomChanged: _web == null ? null : _onZoomChanged,
+        mobileUi: _web == null ? null : _mobileUi,
+        onToggleUi: _web == null ? null : _toggleUi,
         bottom: _bottomPill(),
         child: _web == null ? _unsupported() : WebViewWidget(controller: _web!),
       ),
@@ -415,43 +256,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
               style: DgutType.caption1.copyWith(color: c.ink3),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 缩放档位小胶囊：点一下直接跳到该比例
-class _ZoomChip extends StatelessWidget {
-  const _ZoomChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    return DgutPressable(
-      onTap: onTap,
-      pressedOpacity: 1,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? c.ink : c.fill,
-          borderRadius: BorderRadius.circular(DgutRadius.full),
-        ),
-        child: Text(
-          label,
-          style: DgutType.caption1.copyWith(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: selected ? c.bgDeep : c.ink2,
-          ),
         ),
       ),
     );
