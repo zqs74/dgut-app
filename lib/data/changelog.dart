@@ -22,17 +22,25 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.14.0';
+const String kCurrentVersion = '0.15.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.15.0',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: ['服务页的 22 项与 5 个分组落成一张注册表，为改成表驱动做准备'],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.14.0',
     date: '2026-11-11',
     sections: [
-      ChangelogSection(
-        title: '调整',
-        items: ['App 名字改为「一莞通」，桌面图标与窗口标题同步'],
-      ),
+      ChangelogSection(title: '调整', items: ['App 名字改为「一莞通」，桌面图标与窗口标题同步']),
     ],
   ),
 
@@ -73,10 +81,7 @@ const List<ChangelogEntry> kChangelog = [
           '返回与切换按钮改成玻璃材质，与二级页返回按钮一致',
         ],
       ),
-      ChangelogSection(
-        title: '修复',
-        items: ['登录后落在学工的功能页上读不到身份，改成自动打开基本信息页'],
-      ),
+      ChangelogSection(title: '修复', items: ['登录后落在学工的功能页上读不到身份，改成自动打开基本信息页']),
     ],
   ),
 
@@ -91,10 +96,7 @@ const List<ChangelogEntry> kChangelog = [
           '支持退出登录，退出时会一并通知统一身份认证注销',
         ],
       ),
-      ChangelogSection(
-        title: '移除',
-        items: ['首页的待办占位块（待办与日程不做了）'],
-      ),
+      ChangelogSection(title: '移除', items: ['首页的待办占位块（待办与日程不做了）']),
     ],
   ),
 
@@ -104,10 +106,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '新增',
-        items: [
-          '今天课上完后首页自动切到「明天」，预告明天的课与起止时间',
-          '明天也没课时写明「明天没有课」，并给出下一节是哪天几点',
-        ],
+        items: ['今天课上完后首页自动切到「明天」，预告明天的课与起止时间', '明天也没课时写明「明天没有课」，并给出下一节是哪天几点'],
       ),
     ],
   ),
@@ -126,16 +125,11 @@ const List<ChangelogEntry> kChangelog = [
       ),
       ChangelogSection(
         title: '优化',
-        items: [
-          '本周概况改为从课表算出的门数、节数与撞课位置',
-          '首页快捷入口的课表与学分能直接打开对应页面',
-        ],
+        items: ['本周概况改为从课表算出的门数、节数与撞课位置', '首页快捷入口的课表与学分能直接打开对应页面'],
       ),
       ChangelogSection(
         title: '修复',
-        items: [
-          '首页眉标写死「周一 · 第 11 周」，过了这一周就显示错误的问题',
-        ],
+        items: ['首页眉标写死「周一 · 第 11 周」，过了这一周就显示错误的问题'],
       ),
     ],
   ),
@@ -144,12 +138,7 @@ const List<ChangelogEntry> kChangelog = [
     version: 'v0.10.1',
     date: '2026-11-10',
     sections: [
-      ChangelogSection(
-        title: '修复',
-        items: [
-          '实心样式遇到浅色块时自动改用墨色字，浅底也读得清',
-        ],
-      ),
+      ChangelogSection(title: '修复', items: ['实心样式遇到浅色块时自动改用墨色字，浅底也读得清']),
     ],
   ),
 
@@ -234,10 +223,7 @@ const List<ChangelogEntry> kChangelog = [
       ),
       ChangelogSection(
         title: '修复',
-        items: [
-          '我的课表右侧「⋯」太小，改成一整颗圆钮',
-          '已添课程与搜索框之间补足间距',
-        ],
+        items: ['我的课表右侧「⋯」太小，改成一整颗圆钮', '已添课程与搜索框之间补足间距'],
       ),
     ],
   ),
@@ -248,17 +234,9 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '新增',
-        items: [
-          '多课表：新建、切换、改名、删除，课程与学期各自独立',
-          '上课时间可以逐节改，改完课表轴和详情立刻跟着变',
-        ],
+        items: ['多课表：新建、切换、改名、删除，课程与学期各自独立', '上课时间可以逐节改，改完课表轴和详情立刻跟着变'],
       ),
-      ChangelogSection(
-        title: '优化',
-        items: [
-          '旧版单张课表自动迁进「我的课表」，数据不用重录',
-        ],
-      ),
+      ChangelogSection(title: '优化', items: ['旧版单张课表自动迁进「我的课表」，数据不用重录']),
     ],
   ),
 
@@ -283,11 +261,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '修复',
-        items: [
-          '周条上今天的小圆点压住周数，改到胶囊下方',
-          '「回到本周」换成与底栏同材质的玻璃胶囊',
-          '去掉表单里解释性的占位文字',
-        ],
+        items: ['周条上今天的小圆点压住周数，改到胶囊下方', '「回到本周」换成与底栏同材质的玻璃胶囊', '去掉表单里解释性的占位文字'],
       ),
     ],
   ),
@@ -315,28 +289,19 @@ const List<ChangelogEntry> kChangelog = [
         ],
       ),
     ],
-  ),  ChangelogEntry(
+  ),
+  ChangelogEntry(
     version: 'v0.6.3',
     date: '2026-11-10',
     sections: [
-      ChangelogSection(
-        title: '修复',
-        items: [
-          '修复二级页面标题收起时与顶栏标题错位、出现两个标题的问题',
-        ],
-      ),
+      ChangelogSection(title: '修复', items: ['修复二级页面标题收起时与顶栏标题错位、出现两个标题的问题']),
     ],
   ),
   ChangelogEntry(
     version: 'v0.6.2',
     date: '2026-11-10',
     sections: [
-      ChangelogSection(
-        title: '修复',
-        items: [
-          '修复二级页面返回按钮压住上方灰色小标签的问题',
-        ],
-      ),
+      ChangelogSection(title: '修复', items: ['修复二级页面返回按钮压住上方灰色小标签的问题']),
     ],
   ),
   ChangelogEntry(
@@ -345,10 +310,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '修复',
-        items: [
-          '修复添加课程页整页文字带一条黄线的问题',
-          '修复星期与节次选项被拉满整行、看不出是按钮的问题',
-        ],
+        items: ['修复添加课程页整页文字带一条黄线的问题', '修复星期与节次选项被拉满整行、看不出是按钮的问题'],
       ),
     ],
   ),
@@ -366,13 +328,11 @@ const List<ChangelogEntry> kChangelog = [
       ),
       ChangelogSection(
         title: '优化',
-        items: [
-          '「第几周」按开学日期自动算，不再写死',
-          '非本周的课淡显并在左侧标虚线，一眼看出这周不上',
-        ],
+        items: ['「第几周」按开学日期自动算，不再写死', '非本周的课淡显并在左侧标虚线，一眼看出这周不上'],
       ),
     ],
-  ),  ChangelogEntry(
+  ),
+  ChangelogEntry(
     version: 'v0.5.3',
     date: '2026-11-10',
     sections: [
@@ -390,12 +350,7 @@ const List<ChangelogEntry> kChangelog = [
     version: 'v0.5.2',
     date: '2026-11-10',
     sections: [
-      ChangelogSection(
-        title: '优化',
-        items: [
-          '安装前直接标出下载到的版本号，装完能核对',
-        ],
-      ),
+      ChangelogSection(title: '优化', items: ['安装前直接标出下载到的版本号，装完能核对']),
     ],
   ),
   ChangelogEntry(
@@ -404,10 +359,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '调整',
-        items: [
-          '更新失败只说实话：连不上 GitHub 就写连不上，不再解释原因',
-          '删掉课表、消息、检查更新里解释性的一句说明',
-        ],
+        items: ['更新失败只说实话：连不上 GitHub 就写连不上，不再解释原因', '删掉课表、消息、检查更新里解释性的一句说明'],
       ),
     ],
   ),
@@ -417,9 +369,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '新增',
-        items: [
-          '平板适配：宽屏改为左侧导航栏 + 居中内容区，不再锁在 460 宽',
-        ],
+        items: ['平板适配：宽屏改为左侧导航栏 + 居中内容区，不再锁在 460 宽'],
       ),
       ChangelogSection(
         title: '优化',
@@ -436,9 +386,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '修复',
-        items: [
-          '安装包改下到 cache 目录，修掉「Failed to find configured root」导致装不上',
-        ],
+        items: ['安装包改下到 cache 目录，修掉「Failed to find configured root」导致装不上'],
       ),
     ],
   ),
@@ -454,12 +402,7 @@ const List<ChangelogEntry> kChangelog = [
           '版本更新历史的返回按钮改成玻璃圆钮，不再压住页面标题',
         ],
       ),
-      ChangelogSection(
-        title: '优化',
-        items: [
-          '底部选中胶囊放大到 60×48，图标与文字之间留出间距',
-        ],
-      ),
+      ChangelogSection(title: '优化', items: ['底部选中胶囊放大到 60×48，图标与文字之间留出间距']),
     ],
   ),
   ChangelogEntry(
@@ -473,12 +416,7 @@ const List<ChangelogEntry> kChangelog = [
           '检查更新的失败原因改成看得懂的说法，不再直接抛 HandshakeException',
         ],
       ),
-      ChangelogSection(
-        title: '调整',
-        items: [
-          '下载进度里那行灰色提示去掉',
-        ],
-      ),
+      ChangelogSection(title: '调整', items: ['下载进度里那行灰色提示去掉']),
     ],
   ),
   ChangelogEntry(
@@ -487,10 +425,7 @@ const List<ChangelogEntry> kChangelog = [
     sections: [
       ChangelogSection(
         title: '新增',
-        items: [
-          '在底部 Dock 上左右拖动即可切页，松手才提交',
-          '再点当前 tab 回到页面顶部',
-        ],
+        items: ['在底部 Dock 上左右拖动即可切页，松手才提交', '再点当前 tab 回到页面顶部'],
       ),
       ChangelogSection(
         title: '优化',
@@ -500,30 +435,15 @@ const List<ChangelogEntry> kChangelog = [
           'Dock 收窄为更紧凑的胶囊，五个入口重新分配间距',
         ],
       ),
-      ChangelogSection(
-        title: '修复',
-        items: [
-          '顶栏与边缘各画一次模糊造成的两层，合并为一层',
-        ],
-      ),
+      ChangelogSection(title: '修复', items: ['顶栏与边缘各画一次模糊造成的两层，合并为一层']),
     ],
   ),
   ChangelogEntry(
     version: 'v0.3.0',
     date: '2026-11-10',
     sections: [
-      ChangelogSection(
-        title: '新增',
-        items: [
-          '安卓端支持应用内更新：检查到新版可就地下载并安装',
-        ],
-      ),
-      ChangelogSection(
-        title: '调整',
-        items: [
-          '「我的」新增「检查更新」入口，当前版本号同时显示在这里',
-        ],
-      ),
+      ChangelogSection(title: '新增', items: ['安卓端支持应用内更新：检查到新版可就地下载并安装']),
+      ChangelogSection(title: '调整', items: ['「我的」新增「检查更新」入口，当前版本号同时显示在这里']),
     ],
   ),
   ChangelogEntry(
@@ -546,12 +466,7 @@ const List<ChangelogEntry> kChangelog = [
           '消息页切换待办与通知时横向滑入滑出，不再硬切',
         ],
       ),
-      ChangelogSection(
-        title: '调整',
-        items: [
-          '顶栏去掉叠加的白色底层，只保留模糊',
-        ],
-      ),
+      ChangelogSection(title: '调整', items: ['顶栏去掉叠加的白色底层，只保留模糊']),
     ],
   ),
   ChangelogEntry(
