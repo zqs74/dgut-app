@@ -22,9 +22,24 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.17.1';
+const String kCurrentVersion = '0.17.2';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.17.2',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '调整',
+        items: [
+          '统一身份认证页补上「更多」菜单：刷新、在浏览器打开、复制链接',
+          '登录提示改为「请在上方登录」',
+          '网页菜单去掉灰色说明小字',
+        ],
+      ),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.17.1',
     date: '2026-11-11',

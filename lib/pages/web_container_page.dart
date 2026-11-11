@@ -238,7 +238,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
           DgutGroupHead(title: widget.title),
           DgutRow(
             title: '刷新',
-            subtitle: '重新加载这个页面',
             onTap: () {
               Navigator.of(context).pop();
               _reload();
@@ -246,7 +245,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
           ),
           DgutRow(
             title: '缩放',
-            subtitle: '页面显示比例',
             value: '${(_zoom * 100).round()}%',
             onTap: () {
               Navigator.of(context).pop();
@@ -255,7 +253,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
           ),
           DgutRow(
             title: _mobileUi ? '切换到电脑端' : '切换到手机版',
-            subtitle: _mobileUi ? '按 1280 宽渲染，看得到完整表格' : '按手机宽度重新排版',
             onTap: () {
               Navigator.of(context).pop();
               _toggleUi();
@@ -263,7 +260,6 @@ class _WebContainerPageState extends State<WebContainerPage> {
           ),
           DgutRow(
             title: '在浏览器打开',
-            subtitle: '这里打不开时用系统浏览器',
             onTap: () {
               Navigator.of(context).pop();
               _openInBrowser();

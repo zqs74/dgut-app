@@ -3,9 +3,13 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../components/dgut_basics.dart';
 import '../components/dgut_glass_button.dart';
+import '../components/dgut_sheet.dart';
 import '../components/dgut_status_pill.dart';
 import '../components/dgut_web_scaffold.dart';
 import '../model/identity.dart';
@@ -100,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
         NavigationDelegate(
           onPageStarted: (String url) {
             if (url.contains('authserver')) {
-              _set('请在下方登录');
+              _set('请在上方登录');
             } else if (url.contains('stu.dgut.edu.cn')) {
               _set('正在读取身份');
             }
@@ -123,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _onLoaded(String url) async {
     if (_busy) return;
     if (url.contains('authserver')) {
-      _set('请在下方登录');
+      _set('请在上方登录');
       return;
     }
     if (!url.contains('stu.dgut.edu.cn')) return;
@@ -217,6 +221,56 @@ class _LoginPageState extends State<LoginPage> {
     } catch (_) {}
   }
 
+  Future<void> _openInBrowser() async {
+    try {
+      await launchUrl(
+        Uri.parse(_entryUrl),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      // 没有浏览器可用时不打断登录流程
+    }
+  }
+
+  Future<void> _copyLink() async {
+    await Clipboard.setData(const ClipboardData(text: _entryUrl));
+  }
+
+  void _openMenu() {
+    showDgutSheet<void>(
+      context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          DgutGroupHead(title: '统一身份认证'),
+          DgutRow(
+            title: '刷新',
+            onTap: () {
+              Navigator.of(context).pop();
+              _boot();
+            },
+          ),
+          DgutRow(
+            title: '在浏览器打开',
+            onTap: () {
+              Navigator.of(context).pop();
+              _openInBrowser();
+            },
+          ),
+          DgutRow(
+            title: '复制链接',
+            showDivider: false,
+            onTap: () {
+              Navigator.of(context).pop();
+              _copyLink();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
@@ -230,6 +284,7 @@ class _LoginPageState extends State<LoginPage> {
               : Icons.smartphone_rounded,
           onTap: _toggleUi,
         ),
+        DgutGlassButton(icon: Icons.more_horiz_rounded, onTap: _openMenu),
       ],
       bottom: DgutStatusPill(
         text: _status,
