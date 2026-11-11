@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../components/dgut_basics.dart';
+import '../components/dgut_glass_button.dart';
 import '../model/identity.dart';
 import '../services/identity_parser.dart';
 import '../services/session.dart';
@@ -233,7 +234,7 @@ class _LoginPageState extends State<LoginPage> {
           Positioned(
             left: DgutSpace.pad,
             top: topInset + 8,
-            child: _GlassRoundButton(
+            child: DgutGlassButton(
               icon: Icons.arrow_back_rounded,
               onTap: () => Navigator.of(context).maybePop(),
             ),
@@ -242,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
           Positioned(
             right: DgutSpace.pad,
             bottom: 24,
-            child: _GlassRoundButton(
+            child: DgutGlassButton(
               icon: _mobileUi
                   ? Icons.desktop_windows_outlined
                   : Icons.smartphone_rounded,
@@ -273,10 +274,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '登录在安卓版可用',
-              style: DgutType.body.copyWith(color: c.ink2),
-            ),
+            Text('登录在安卓版可用', style: DgutType.body.copyWith(color: c.ink2)),
             const SizedBox(height: DgutSpace.s3),
             Text(
               '网页预览里没有 WebView，登录与抓取都跑不起来',
@@ -292,44 +290,6 @@ class _LoginPageState extends State<LoginPage> {
 
 /// 玻璃圆钮：与二级页的返回按钮、Dock 同一套材质
 /// （半透明 + 模糊 + 发丝边 + 外阴影）。
-class _GlassRoundButton extends StatelessWidget {
-  const _GlassRoundButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: DgutShadows.forBrightness(Theme.of(context).brightness),
-      ),
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: c.glassDock.withValues(
-                alpha: context.isDark ? 0.46 : 0.42,
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(color: c.glassEdge, width: 1),
-            ),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onTap,
-              child: Center(child: Icon(icon, size: 21, color: c.ink)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _StatusBar extends StatelessWidget {
   const _StatusBar({required this.text, this.onRetry});

@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../components/dgut_basics.dart';
+import '../components/dgut_status_pill.dart';
+import '../components/dgut_web_scaffold.dart';
 import '../services/jwx_parser.dart';
 import '../theme/dgut_tokens.dart';
 import 'course_edit_page.dart';
@@ -162,38 +163,16 @@ class _JwxImportPageState extends State<JwxImportPage> {
   @override
   Widget build(BuildContext context) {
     final DgutColors c = context.dg;
-    final double topInset = MediaQuery.viewPaddingOf(context).top;
 
-    return Scaffold(
-      backgroundColor: c.bg,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: _web == null
-                ? _unsupported(c)
-                : WebViewWidget(controller: _web!),
-          ),
-          Positioned(
-            left: DgutSpace.pad,
-            top: topInset + 8,
-            child: _RoundButton(
-              icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.of(context).maybePop(),
-            ),
-          ),
-          Positioned(
-            left: DgutSpace.pad,
-            right: DgutSpace.pad,
-            bottom: 24,
-            child: Center(
-              child: _StatusPill(
-                text: _status,
-                onRetry: _status == '登录教务' ? null : _boot,
-              ),
-            ),
-          ),
-        ],
+    return DgutWebScaffold(
+      title: '教务导入',
+      onBack: () => Navigator.of(context).maybePop(),
+      bottom: DgutStatusPill(
+        text: _status,
+        actionLabel: _status == '登录教务' ? null : '重试',
+        onAction: _status == '登录教务' ? null : _boot,
       ),
+      child: _web == null ? _unsupported(c) : WebViewWidget(controller: _web!),
     );
   }
 
@@ -214,86 +193,6 @@ class _JwxImportPageState extends State<JwxImportPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    return DgutPressable(
-      onTap: onTap,
-      pressedOpacity: 1,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: c.bg.withValues(alpha: 0.92),
-          shape: BoxShape.circle,
-          boxShadow: DgutShadows.float,
-        ),
-        child: Icon(icon, size: 20, color: c.ink),
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.text, this.onRetry});
-
-  final String text;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DgutRadius.full),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          decoration: BoxDecoration(
-            color: c.glassDock.withValues(alpha: dark ? 0.55 : 0.52),
-            borderRadius: BorderRadius.circular(DgutRadius.full),
-            border: Border.all(color: c.glassEdge, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                text,
-                style: DgutType.caption1.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: c.ink,
-                ),
-              ),
-              if (onRetry != null) ...[
-                const SizedBox(width: 10),
-                DgutPressable(
-                  onTap: onRetry,
-                  child: Text(
-                    '重试',
-                    style: DgutType.caption1.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: c.blueInk,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );

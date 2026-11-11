@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../components/dgut_basics.dart';
+import '../components/dgut_glass_button.dart';
 import '../components/dgut_sheet.dart';
+import '../components/dgut_status_pill.dart';
+import '../components/dgut_web_scaffold.dart';
 import '../theme/dgut_tokens.dart';
 
 /// 通用 WebView 容器：服务页里 D2 档（进容器）的去处。
@@ -354,80 +356,52 @@ class _WebContainerPageState extends State<WebContainerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    final double topInset = MediaQuery.viewPaddingOf(context).top;
-
-    return Scaffold(
-      backgroundColor: c.bg,
-      body: PopScope(
-        // 有网页历史时拦下系统返回，交给 _goBack 先退网页。
-        // 退到底（canGoBack 变 false）就恢复允许返回，不长期拦住。
-        canPop: !_canGoBack,
-        onPopInvokedWithResult: (bool didPop, Object? _) {
-          if (didPop) return;
-          _goBack();
-        },
-        child: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: _web == null
-                  ? _unsupported()
-                  : WebViewWidget(controller: _web!),
-            ),
-            // 返回
-            Positioned(
-              left: DgutSpace.pad,
-              top: topInset + 8,
-              child: _RoundButton(
-                icon: Icons.arrow_back_rounded,
-                onTap: _goBack,
-              ),
-            ),
-            // 手机 / 电脑端切换 + 更多
-            if (_web != null)
-              Positioned(
-                right: DgutSpace.pad,
-                top: topInset + 8,
-                child: Row(
-                  children: <Widget>[
-                    _RoundButton(
-                      icon: _mobileUi
-                          ? Icons.desktop_windows_outlined
-                          : Icons.smartphone_rounded,
-                      onTap: _toggleUi,
-                    ),
-                    const SizedBox(width: 8),
-                    _RoundButton(
-                      icon: Icons.more_horiz_rounded,
-                      onTap: _openMenu,
-                    ),
-                  ],
+    return PopScope(
+      // 有网页历史时拦下系统返回，交给 _goBack 先退网页。
+      // 退到底（canGoBack 变 false）就恢复允许返回，不长期拦住。
+      canPop: !_canGoBack,
+      onPopInvokedWithResult: (bool didPop, Object? _) {
+        if (didPop) return;
+        _goBack();
+      },
+      child: DgutWebScaffold(
+        title: widget.title,
+        onBack: _goBack,
+        actions: _web == null
+            ? const <Widget>[]
+            : <Widget>[
+                DgutGlassButton(
+                  icon: _mobileUi
+                      ? Icons.desktop_windows_outlined
+                      : Icons.smartphone_rounded,
+                  onTap: _toggleUi,
                 ),
-              ),
-            // 底部状态：加载中 / 出错 / 临时提示
-            Positioned(
-              left: DgutSpace.pad,
-              right: DgutSpace.pad,
-              bottom: MediaQuery.viewPaddingOf(context).bottom + 24,
-              child: Center(child: _bottomPill(c)),
-            ),
-          ],
-        ),
+                DgutGlassButton(
+                  icon: Icons.more_horiz_rounded,
+                  onTap: _openMenu,
+                ),
+              ],
+        bottom: _bottomPill(),
+        child: _web == null ? _unsupported() : WebViewWidget(controller: _web!),
       ),
     );
   }
 
-  Widget _bottomPill(DgutColors c) {
+  Widget? _bottomPill() {
     if (_notice.isNotEmpty) {
-      return _StatusPill(text: _notice);
+      return DgutStatusPill(text: _notice);
     }
     if (_error != null) {
-      return _StatusPill(text: _error!, actionLabel: '重试', onAction: _reload);
+      return DgutStatusPill(
+        text: _error!,
+        actionLabel: '重试',
+        onAction: _reload,
+      );
     }
     if (_loading) {
-      return _StatusPill(text: '正在打开${widget.title}');
+      return DgutStatusPill(text: '正在打开${widget.title}');
     }
-    return const SizedBox.shrink();
+    return null;
   }
 
   Widget _unsupported() {
@@ -482,93 +456,6 @@ class _ZoomChip extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: selected ? c.bgDeep : c.ink2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    return DgutPressable(
-      onTap: onTap,
-      pressedOpacity: 1,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: c.bg.withValues(alpha: 0.92),
-          shape: BoxShape.circle,
-          boxShadow: DgutShadows.float,
-        ),
-        child: Icon(icon, size: 20, color: c.ink),
-      ),
-    );
-  }
-}
-
-/// 底部玻璃胶囊：加载态、错误态与临时提示共用
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.text, this.actionLabel, this.onAction});
-
-  final String text;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final DgutColors c = context.dg;
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DgutRadius.full),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          decoration: BoxDecoration(
-            color: c.glassDock.withValues(alpha: dark ? 0.55 : 0.52),
-            borderRadius: BorderRadius.circular(DgutRadius.full),
-            border: Border.all(color: c.glassEdge, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Flexible(
-                child: Text(
-                  text,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DgutType.caption1.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: c.ink,
-                  ),
-                ),
-              ),
-              if (actionLabel != null && onAction != null) ...<Widget>[
-                const SizedBox(width: 10),
-                DgutPressable(
-                  onTap: onAction,
-                  child: Text(
-                    actionLabel!,
-                    style: DgutType.caption1.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: c.blueInk,
-                    ),
-                  ),
-                ),
-              ],
-            ],
           ),
         ),
       ),

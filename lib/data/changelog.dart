@@ -22,9 +22,32 @@ class ChangelogEntry {
   final List<ChangelogSection> sections;
 }
 
-const String kCurrentVersion = '0.16.2';
+const String kCurrentVersion = '0.17.0';
 
 const List<ChangelogEntry> kChangelog = [
+  ChangelogEntry(
+    version: 'v0.17.0',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(
+        title: '新增',
+        items: [
+          '网页统一模板：顶部玻璃导航栏（返回、标题、操作），底部状态胶囊',
+          '网页的返回、切换设备与更多按钮统一改用玻璃圆钮，与登录页同一套材质',
+        ],
+      ),
+      ChangelogSection(title: '调整', items: ['教务导入页改用同一套网页模板']),
+    ],
+  ),
+
+  ChangelogEntry(
+    version: 'v0.16.3',
+    date: '2026-11-11',
+    sections: [
+      ChangelogSection(title: '调整', items: ['网页页的返回、切换设备与更多按钮统一改成玻璃材质，与登录页一致']),
+    ],
+  ),
+
   ChangelogEntry(
     version: 'v0.16.2',
     date: '2026-11-11',
